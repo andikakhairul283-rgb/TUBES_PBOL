@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data kamar | Sistem Manajemen Hotel</title>
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/kamar.css">
+</head>
+<body data-page="data">
+<div id="page">
+
+  <div class="page-head">
+    <div><h1>Data kamar</h1><p class="text-muted mb-0">Cari, filter, dan kelola seluruh kamar hotel.</p></div>
+    <a class="btn btn-primary" href="form-kamar.html">Tambah kamar</a>
+  </div>
+
+  <div class="toolbar">
+    <div class="search"><input id="f-cari" class="form-control" type="search" placeholder="Cari nomor, tipe, atau catatan" aria-label="Cari kamar"></div>
+    <select id="f-status" class="form-control" aria-label="Filter status"></select>
+    <select id="f-tipe" class="form-control" aria-label="Filter tipe"></select>
+    <button class="btn btn-ghost btn-sm" id="f-reset" type="button">Atur ulang</button>
+    <span class="spacer"></span>
+    <span class="result-info" id="kamar-count"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table" id="kamar-table">
+      <thead><tr><th>No. kamar</th><th>Lantai</th><th>Tipe</th><th>Status</th><th>Catatan</th><th class="col-actions">Aksi</th></tr></thead>
+      <tbody id="kamar-body"></tbody>
+    </table>
+    <div class="empty hidden" id="kamar-empty"><b>Kamar tidak ditemukan</b>Ubah kata kunci atau filter, atau tambahkan kamar baru.</div>
+  </div>
+
+  <p style="margin-top:var(--space-4)"><button class="link-reset" id="reset-data" type="button">Kembalikan ke data contoh</button></p>
+
+</div>
+
+<!-- Modal hapus -->
+<div class="modal-overlay" id="modal-hapus">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Hapus kamar</h3>
+      <button class="modal-close" type="button" aria-label="Tutup" data-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Hapus kamar <b id="del-name"></b>? Tindakan ini tidak dapat dibatalkan.</p>
+      <div class="alert alert-warning hidden" id="del-warn" style="margin-bottom:0">Kamar ini sedang terisi atau dipesan. Pastikan reservasinya sudah dipindahkan.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" type="button" data-close>Batal</button>
+      <button class="btn btn-danger" type="button" id="del-confirm">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<script src="../../assets/js/layout.js" data-root="../../"></script>
+<script src="../../assets/js/kamar.js"></script>
+</body>
+</html>

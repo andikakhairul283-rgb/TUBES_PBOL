@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tipe kamar | Sistem Manajemen Hotel</title>
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/kamar.css">
+</head>
+<body data-page="tipe">
+<div id="page">
+
+  <div class="page-head">
+    <div><h1>Tipe kamar</h1><p class="text-muted mb-0">Atur harga per malam, kapasitas, dan fasilitas tiap tipe kamar.</p></div>
+    <button class="btn btn-primary" id="btn-tambah-tipe" type="button">Tambah tipe</button>
+  </div>
+
+  <div class="toolbar"><span class="result-info" id="tipe-count"></span></div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Tipe</th><th>Harga</th><th>Kapasitas</th><th>Fasilitas</th><th>Jumlah kamar</th><th class="col-actions">Aksi</th></tr></thead>
+      <tbody id="tipe-body"></tbody>
+    </table>
+    <div class="empty hidden" id="tipe-empty"><b>Belum ada tipe kamar</b>Klik "Tambah tipe" untuk membuat tipe pertama.</div>
+  </div>
+
+</div>
+
+<!-- Modal tambah/ubah tipe -->
+<div class="modal-overlay" id="modal-tipe">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="tipe-title">Tambah tipe kamar</h3>
+      <button class="modal-close" type="button" aria-label="Tutup" data-close>&times;</button>
+    </div>
+    <form id="form-tipe" novalidate>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="t-nama">Nama tipe</label>
+          <input id="t-nama" class="form-control" placeholder="Contoh: Deluxe">
+          <div class="form-error hidden" id="t-nama-err">Nama tipe wajib diisi.</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="t-harga">Harga per malam (Rp)</label>
+            <input id="t-harga" type="number" min="0" step="1000" class="form-control" placeholder="550000">
+            <div class="form-error hidden">Harga harus lebih dari 0.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="t-kap">Kapasitas (tamu)</label>
+            <input id="t-kap" type="number" min="1" class="form-control" placeholder="2">
+            <div class="form-error hidden">Kapasitas minimal 1 tamu.</div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="t-fas">Fasilitas</label>
+          <textarea id="t-fas" class="form-control" placeholder="AC, TV, WiFi, Sarapan"></textarea>
+          <div class="form-hint">Pisahkan dengan koma.</div>
+          <div class="form-error hidden">Isi minimal satu fasilitas.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" type="button" data-close>Batal</button>
+        <button class="btn btn-primary" type="submit">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal hapus -->
+<div class="modal-overlay" id="modal-hapus">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Hapus tipe kamar</h3>
+      <button class="modal-close" type="button" aria-label="Tutup" data-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Hapus tipe <b id="del-name"></b>? Tindakan ini tidak dapat dibatalkan.</p>
+      <div class="alert alert-danger hidden" id="del-block" style="margin-bottom:0">Tipe ini masih dipakai <b id="del-block-n">0</b> kamar. Ubah tipe kamar tersebut dulu sebelum menghapus.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" type="button" data-close>Batal</button>
+      <button class="btn btn-danger" type="button" id="del-confirm">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<script src="../../assets/js/layout.js" data-root="../../"></script>
+<script src="../../assets/js/kamar.js"></script>
+</body>
+</html>

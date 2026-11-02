@@ -63,7 +63,7 @@
       '<a class="btn btn-outline btn-sm" href="' + root + 'pages/login.html">Keluar</a></div>' +
     "</header>" +
     '<div class="app-content"></div>' +
-    '<footer class="app-footer">&copy; ' + new Date().getFullYear() + " Sistem Manajemen Hotel &middot; Capstone PBOL</footer>";
+    '<footer class="app-footer">&copy; Kelompok 7 - Sistem Manajemen Hotel</footer>';
 
   main.querySelector(".nav-date").textContent = new Date().toLocaleDateString("id-ID",
     { weekday: "long", day: "numeric", month: "long", year: "numeric" });

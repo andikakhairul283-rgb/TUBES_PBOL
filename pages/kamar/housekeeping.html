@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Housekeeping | Sistem Manajemen Hotel</title>
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/kamar.css">
+</head>
+<body data-page="housekeeping">
+<div id="page">
+
+  <div class="page-head">
+    <div><h1>Housekeeping</h1><p class="text-muted mb-0">Pantau kamar yang perlu dibersihkan atau diperbaiki, dan tugaskan petugas.</p></div>
+    <button class="btn btn-primary" id="btn-tugas" type="button">Tambah tugas</button>
+  </div>
+
+  <div class="grid grid-4 mb-5" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+    <div class="stat"><div><div class="stat-label">Perlu dibersihkan</div><div class="stat-value" id="s-clean">0</div><div class="stat-note">Status dibersihkan</div></div><div class="stat-icon" style="color:var(--cleaning-ink);background:rgba(var(--cleaning-rgb),.16)">&#9679;</div></div>
+    <div class="stat"><div><div class="stat-label">Dalam perbaikan</div><div class="stat-value" id="s-maint">0</div><div class="stat-note">Status maintenance</div></div><div class="stat-icon" style="color:var(--maintenance-ink);background:rgba(var(--maintenance-rgb),.12)">&#9650;</div></div>
+    <div class="stat"><div><div class="stat-label">Selesai hari ini</div><div class="stat-value" id="s-done">0</div><div class="stat-note">Kamar kembali tersedia</div></div><div class="stat-icon" style="color:var(--available-ink);background:rgba(var(--available-rgb),.12)">&#9632;</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="seg" id="hk-filter" role="group" aria-label="Filter tugas">
+      <button type="button" data-f="all" class="is-active">Semua <span class="n" id="n-all">0</span></button>
+      <button type="button" data-f="cleaning">Dibersihkan <span class="n" id="n-cleaning">0</span></button>
+      <button type="button" data-f="maintenance">Maintenance <span class="n" id="n-maintenance">0</span></button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table" id="hk-table">
+      <thead><tr><th>Kamar</th><th>Status</th><th>Catatan</th><th style="width:200px">Petugas</th><th class="col-actions">Aksi</th></tr></thead>
+      <tbody id="hk-body"></tbody>
+    </table>
+    <div class="empty hidden" id="hk-empty"><b>Semua kamar siap dipakai</b>Tidak ada kamar yang perlu dibersihkan atau diperbaiki.</div>
+  </div>
+
+</div>
+
+<!-- Modal tambah tugas -->
+<div class="modal-overlay" id="modal-tugas">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Tambah tugas</h3>
+      <button class="modal-close" type="button" aria-label="Tutup" data-close>&times;</button>
+    </div>
+    <form id="form-tugas" novalidate>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="a-kamar">Kamar</label>
+          <select id="a-kamar" class="form-control"></select>
+          <div class="form-error hidden">Pilih kamar terlebih dulu.</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="a-jenis">Jenis tugas</label>
+            <select id="a-jenis" class="form-control"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="a-petugas">Petugas</label>
+            <select id="a-petugas" class="form-control"></select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="a-catatan">Catatan</label>
+          <textarea id="a-catatan" class="form-control" placeholder="Contoh: Ganti seprai dan isi ulang amenities"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" type="button" data-close>Batal</button>
+        <button class="btn btn-primary" type="submit">Simpan tugas</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../../assets/js/layout.js" data-root="../../"></script>
+<script src="../../assets/js/kamar.js"></script>
+</body>
+</html>

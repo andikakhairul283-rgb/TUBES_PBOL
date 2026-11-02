@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tambah kamar | Sistem Manajemen Hotel</title>
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/kamar.css">
+</head>
+<body data-page="form">
+<div id="page">
+
+  <div class="page-head">
+    <div><h1 id="form-title">Tambah kamar</h1><p class="text-muted mb-0" id="form-sub">Isi data kamar baru. Pratinjau kartu kamar tampil di samping.</p></div>
+    <a class="btn btn-outline" href="data-kamar.html">Kembali ke data kamar</a>
+  </div>
+
+  <div class="alert alert-danger hidden" id="form-notfound">Kamar tidak ditemukan. <a href="data-kamar.html">Kembali ke data kamar</a>.</div>
+
+  <div class="form-layout">
+    <div class="card card-gold"><div class="card-body">
+      <form id="form-kamar" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="k-no">Nomor kamar</label>
+            <input id="k-no" class="form-control" inputmode="numeric" placeholder="Contoh: 109" autocomplete="off">
+            <div class="form-error hidden" id="k-no-err">Nomor kamar wajib diisi (angka).</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="k-lantai">Lantai</label>
+            <input id="k-lantai" type="number" min="1" class="form-control" placeholder="1">
+            <div class="form-error hidden">Lantai minimal 1.</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="k-tipe">Tipe kamar</label>
+            <select id="k-tipe" class="form-control"></select>
+            <div class="form-error hidden">Pilih tipe kamar.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="k-status">Status</label>
+            <select id="k-status" class="form-control"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="k-catatan">Catatan</label>
+          <textarea id="k-catatan" class="form-control" placeholder="Opsional, misalnya: view kolam renang"></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" id="btn-simpan">Simpan kamar</button>
+          <a class="btn btn-outline" href="data-kamar.html">Batal</a>
+        </div>
+      </form>
+    </div></div>
+
+    <aside>
+      <div class="card preview-card"><div class="card-body">
+        <div class="preview-label">Pratinjau kartu kamar</div>
+        <div class="room-tile room-available" id="pv-tile">
+          <div class="room-no" id="pv-no">---</div>
+          <div class="room-type" id="pv-type">-</div>
+          <div class="room-status" id="pv-status">Tersedia</div>
+        </div>
+        <div class="preview-meta">
+          <div>Lantai: <b id="pv-lantai">-</b></div>
+          <div>Harga: <b id="pv-harga">-</b> / malam</div>
+          <div>Kapasitas: <b id="pv-kap">-</b></div>
+        </div>
+      </div></div>
+    </aside>
+  </div>
+
+</div>
+
+<script src="../../assets/js/layout.js" data-root="../../"></script>
+<script src="../../assets/js/kamar.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grid status kamar | Sistem Manajemen Hotel</title>
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="../../assets/css/layout.css">
+  <link rel="stylesheet" href="../../assets/css/kamar.css">
+</head>
+<body data-page="grid">
+<div id="page">
+
+  <div class="page-head">
+    <div><h1>Grid status kamar</h1><p class="text-muted mb-0">Lihat kondisi semua kamar. Klik kamar untuk mengubah statusnya.</p></div>
+    <div class="toolbar" style="margin-bottom:0">
+      <select id="f-lantai" class="form-control" aria-label="Filter lantai"></select>
+      <select id="f-tipe" class="form-control" aria-label="Filter tipe"></select>
+    </div>
+  </div>
+
+  <div class="legend" id="legend" aria-label="Legenda status, klik untuk memfilter"></div>
+
+  <div id="grid"></div>
+  <div class="card hidden" id="grid-empty"><div class="empty"><b>Tidak ada kamar</b>Tidak ada kamar yang cocok dengan filter ini.</div></div>
+
+</div>
+
+<!-- Modal detail & ubah status -->
+<div class="modal-overlay" id="modal-kamar">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="m-title">Kamar</h3>
+      <button class="modal-close" type="button" aria-label="Tutup" data-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <dl class="detail" id="m-detail"></dl>
+      <div class="form-group">
+        <label class="form-label" for="m-status">Ubah status</label>
+        <select id="m-status" class="form-control"></select>
+      </div>
+      <div class="form-group hidden" id="m-petugas-wrap" style="margin-bottom:0">
+        <label class="form-label" for="m-petugas">Petugas housekeeping</label>
+        <select id="m-petugas" class="form-control"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a class="btn btn-ghost" id="m-edit" href="form-kamar.html" style="margin-right:auto">Ubah data kamar</a>
+      <button class="btn btn-outline" type="button" data-close>Batal</button>
+      <button class="btn btn-primary" type="button" id="m-save">Simpan status</button>
+    </div>
+  </div>
+</div>
+
+<script src="../../assets/js/layout.js" data-root="../../"></script>
+<script src="../../assets/js/kamar.js"></script>
+</body>
+</html>
