@@ -1,0 +1,436 @@
+/* =========================================================
+   Design System v2 - Sistem Manajemen Hotel (Capstone PBOL)
+   Pemilik: Anggota 1 (KOM)
+   Catatan: radius diubah dari 8px (dokumen) ke 4px agar
+   tampilan lebih tegas dan profesional.
+   ========================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap");
+
+/* ---------- 1. Token ---------- */
+:root {
+  /* Warna utama */
+  --color-primary: #1e3a5f;
+  --color-secondary: #2a9d8f;
+  --color-accent: #c9a24b;
+  --color-bg: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-text: #1f2937;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e7eb;
+
+  /* Kanal RGB (untuk permainan opacity: rgba(var(--x-rgb), .1)) */
+  --primary-rgb: 30, 58, 95;
+  --secondary-rgb: 42, 157, 143;
+  --accent-rgb: 201, 162, 75;
+
+  /* Status kamar (WAJIB konsisten di semua halaman) */
+  --status-available: #2e9e5b;
+  --status-occupied: #3b82f6;
+  --status-reserved: #8b5cf6;
+  --status-cleaning: #f2a93b;
+  --status-maintenance: #d64545;
+
+  --available-rgb: 46, 158, 91;
+  --occupied-rgb: 59, 130, 246;
+  --reserved-rgb: 139, 92, 246;
+  --cleaning-rgb: 242, 169, 59;
+  --maintenance-rgb: 214, 69, 69;
+
+  /* Teks status (versi lebih gelap agar terbaca di latar transparan) */
+  --available-ink: #1f7a44;
+  --occupied-ink: #1d5fd1;
+  --reserved-ink: #6d3fd0;
+  --cleaning-ink: #94590a;
+  --maintenance-ink: #a82f2f;
+
+  /* Garis & hover */
+  --line: rgba(var(--primary-rgb), 0.12);
+  --line-strong: rgba(var(--primary-rgb), 0.28);
+  --primary-dark: #162d4a;
+  --secondary-dark: #228176;
+  --danger-dark: #b93a3a;
+
+  /* Tipografi */
+  --font-heading: "Poppins", sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Bentuk */
+  --radius: 4px;
+  --radius-sm: 2px;
+  --shadow: 0 1px 2px rgba(var(--primary-rgb), 0.06);
+  --shadow-lg: 0 18px 40px rgba(var(--primary-rgb), 0.22);
+
+  /* Jarak */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Layout (dipakai saat membuat sidebar/navbar) */
+  --sidebar-width: 260px;
+  --navbar-height: 64px;
+}
+
+/* ---------- 2. Reset & dasar ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--color-primary);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+h1 { font-size: 28px; font-weight: 700; }
+h2 { font-size: 21px; }
+h3 { font-size: 17px; }
+h4 { font-size: 15px; }
+
+p { margin: 0 0 var(--space-3); }
+a { color: var(--color-secondary); text-decoration: none; }
+a:hover { color: var(--secondary-dark); text-decoration: underline; }
+
+:focus-visible {
+  outline: 2px solid rgba(var(--secondary-rgb), 0.7);
+  outline-offset: 2px;
+}
+
+.text-muted { color: var(--color-text-muted); }
+.text-sm { font-size: 12.5px; }
+
+/* ---------- 3. Tombol ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 9px 18px;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn:hover { text-decoration: none; }
+.btn:disabled, .btn.is-disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-primary { background: var(--color-secondary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--secondary-dark); color: #fff; }
+
+.btn-navy { background: var(--color-primary); color: #fff; }
+.btn-navy:hover:not(:disabled) { background: var(--primary-dark); color: #fff; }
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary);
+  border-color: var(--line-strong);
+}
+.btn-outline:hover:not(:disabled) {
+  background: rgba(var(--primary-rgb), 0.06);
+  border-color: var(--color-primary);
+}
+
+.btn-ghost { background: transparent; color: var(--color-secondary); }
+.btn-ghost:hover:not(:disabled) { background: rgba(var(--secondary-rgb), 0.1); }
+
+.btn-danger { background: var(--status-maintenance); color: #fff; }
+.btn-danger:hover:not(:disabled) { background: var(--danger-dark); color: #fff; }
+
+.btn-sm { padding: 5px 11px; font-size: 12.5px; }
+.btn-block { display: flex; width: 100%; }
+
+/* ---------- 4. Form ---------- */
+.form-group { margin-bottom: var(--space-4); }
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.form-control {
+  width: 100%;
+  padding: 9px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+  border-radius: var(--radius);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-control::placeholder { color: rgba(var(--primary-rgb), 0.4); }
+.form-control:hover { border-color: rgba(var(--primary-rgb), 0.4); }
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(var(--secondary-rgb), 0.18);
+}
+.form-control:disabled { background: rgba(var(--primary-rgb), 0.04); cursor: not-allowed; }
+textarea.form-control { min-height: 90px; resize: vertical; }
+
+.form-control.is-invalid { border-color: var(--status-maintenance); }
+.form-control.is-invalid:focus { box-shadow: 0 0 0 3px rgba(var(--maintenance-rgb), 0.18); }
+.form-error { margin-top: 5px; font-size: 12px; color: var(--maintenance-ink); }
+.form-hint { margin-top: 5px; font-size: 12px; color: var(--color-text-muted); }
+
+/* ---------- 5. Card ---------- */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px var(--space-5);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.card-body { padding: var(--space-5); }
+.card-gold { border-top: 2px solid var(--color-accent); }
+
+/* ---------- 6. Tabel ---------- */
+.table-wrap {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.table th {
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-primary);
+  background: rgba(var(--primary-rgb), 0.05);
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr { transition: background 0.12s; }
+.table tbody tr:hover { background: rgba(var(--secondary-rgb), 0.06); }
+
+/* ---------- 7. Badge status (latar transparan + titik) ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge-available   { color: var(--available-ink);   background: rgba(var(--available-rgb), 0.12);   border-color: rgba(var(--available-rgb), 0.3); }
+.badge-occupied    { color: var(--occupied-ink);    background: rgba(var(--occupied-rgb), 0.12);    border-color: rgba(var(--occupied-rgb), 0.3); }
+.badge-reserved    { color: var(--reserved-ink);    background: rgba(var(--reserved-rgb), 0.12);    border-color: rgba(var(--reserved-rgb), 0.3); }
+.badge-cleaning    { color: var(--cleaning-ink);    background: rgba(var(--cleaning-rgb), 0.16);    border-color: rgba(var(--cleaning-rgb), 0.4); }
+.badge-maintenance { color: var(--maintenance-ink); background: rgba(var(--maintenance-rgb), 0.12); border-color: rgba(var(--maintenance-rgb), 0.3); }
+
+/* Penanda premium (tanpa titik) */
+.badge-gold {
+  color: #7a5e1c;
+  background: rgba(var(--accent-rgb), 0.18);
+  border-color: rgba(var(--accent-rgb), 0.5);
+}
+.badge-gold::before { display: none; }
+
+/* Warna status solid (grid kamar & kalender) */
+.bg-available   { background: var(--status-available); }
+.bg-occupied    { background: var(--status-occupied); }
+.bg-reserved    { background: var(--status-reserved); }
+.bg-cleaning    { background: var(--status-cleaning); }
+.bg-maintenance { background: var(--status-maintenance); }
+
+/* ---------- 8. Alert ---------- */
+.alert {
+  padding: 11px 16px;
+  margin-bottom: var(--space-3);
+  font-size: 13.5px;
+  border: 1px solid;
+  border-left-width: 3px;
+  border-radius: var(--radius);
+}
+.alert-success { color: var(--available-ink);   background: rgba(var(--available-rgb), 0.08);   border-color: rgba(var(--available-rgb), 0.35);   border-left-color: var(--status-available); }
+.alert-info    { color: var(--occupied-ink);    background: rgba(var(--occupied-rgb), 0.08);    border-color: rgba(var(--occupied-rgb), 0.35);    border-left-color: var(--status-occupied); }
+.alert-warning { color: var(--cleaning-ink);    background: rgba(var(--cleaning-rgb), 0.12);    border-color: rgba(var(--cleaning-rgb), 0.4);     border-left-color: var(--status-cleaning); }
+.alert-danger  { color: var(--maintenance-ink); background: rgba(var(--maintenance-rgb), 0.08); border-color: rgba(var(--maintenance-rgb), 0.35); border-left-color: var(--status-maintenance); }
+
+/* ---------- 9. Modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(22, 45, 74, 0.55);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+.modal-overlay.is-open { display: flex; }
+
+.modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-top: 2px solid var(--color-accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px var(--space-5);
+  border-bottom: 1px solid var(--line);
+}
+.modal-title { margin: 0; font-size: 17px; }
+.modal-close {
+  padding: 0 var(--space-2);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--color-primary); }
+.modal-body { padding: var(--space-5); }
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: 14px var(--space-5);
+  background: rgba(var(--primary-rgb), 0.03);
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- 10. Kartu statistik (Dashboard) ---------- */
+.stat {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.stat-label { font-size: 13px; color: var(--color-text-muted); }
+.stat-value {
+  margin-top: 4px;
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+.stat-note { margin-top: 4px; font-size: 12.5px; color: var(--color-text-muted); }
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  color: var(--color-primary);
+  background: rgba(var(--primary-rgb), 0.08);
+  border-radius: var(--radius);
+}
+.stat-icon.is-teal { color: var(--color-secondary); background: rgba(var(--secondary-rgb), 0.12); }
+.stat-icon.is-gold { color: #7a5e1c; background: rgba(var(--accent-rgb), 0.2); }
+
+/* ---------- 11. Kartu kamar (Grid Status Kamar) ---------- */
+.room-tile {
+  padding: 14px 16px;
+  border: 1px solid;
+  border-left-width: 4px;
+  border-radius: var(--radius);
+  transition: box-shadow 0.15s;
+}
+.room-tile:hover { box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.12); }
+.room-no {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+.room-type { font-size: 12.5px; color: var(--color-text-muted); }
+.room-status { margin-top: 8px; font-size: 12px; font-weight: 500; }
+
+.room-available   { background: rgba(var(--available-rgb), 0.09);   border-color: rgba(var(--available-rgb), 0.3);   border-left-color: var(--status-available); }
+.room-occupied    { background: rgba(var(--occupied-rgb), 0.09);    border-color: rgba(var(--occupied-rgb), 0.3);    border-left-color: var(--status-occupied); }
+.room-reserved    { background: rgba(var(--reserved-rgb), 0.09);    border-color: rgba(var(--reserved-rgb), 0.3);    border-left-color: var(--status-reserved); }
+.room-cleaning    { background: rgba(var(--cleaning-rgb), 0.12);    border-color: rgba(var(--cleaning-rgb), 0.4);    border-left-color: var(--status-cleaning); }
+.room-maintenance { background: rgba(var(--maintenance-rgb), 0.09); border-color: rgba(var(--maintenance-rgb), 0.3); border-left-color: var(--status-maintenance); }
+
+.room-available .room-status   { color: var(--available-ink); }
+.room-occupied .room-status    { color: var(--occupied-ink); }
+.room-reserved .room-status    { color: var(--reserved-ink); }
+.room-cleaning .room-status    { color: var(--cleaning-ink); }
+.room-maintenance .room-status { color: var(--maintenance-ink); }
+
+/* ---------- 12. Utilitas ---------- */
+.flex { display: flex; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-wrap { flex-wrap: wrap; }
+.gap-2 { gap: var(--space-2); }
+.gap-4 { gap: var(--space-4); }
+.grid { display: grid; gap: var(--space-4); }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.grid-rooms { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.mb-4 { margin-bottom: var(--space-4); }
+.mb-5 { margin-bottom: var(--space-5); }
+.text-center { text-align: center; }
+.hidden { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
