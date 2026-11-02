@@ -50,7 +50,10 @@
   function tipeNama(id) { var t = tipeById(id); return t ? t.nama : "-"; }
   function kamarByNo(no) { return db.kamar.filter(function (k) { return k.no === no; })[0]; }
   function badge(st) { return '<span class="badge badge-' + st + '">' + STATUS[st] + "</span>"; }
-  function tipeBadge(id) { return id === "suite" ? '<span class="badge badge-gold">Suite</span>' : esc(tipeNama(id)); }
+  function tipeBadge(id) {
+    var kelas = { standard: "standard", deluxe: "deluxe", suite: "suite" }[id] || "custom";
+    return '<span class="badge badge-room badge-room-' + kelas + '">' + esc(tipeNama(id)) + "</span>";
+  }
   function sortKamar(a, b) { return Number(a.no) - Number(b.no); }
   function param(n) { return new URLSearchParams(location.search).get(n); }
   function opts(list, sel) { return list.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (o[0] === sel ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join(""); }
@@ -106,7 +109,7 @@
         var n = db.kamar.filter(function (k) { return k.tipe === t.id; }).length;
         var chips = t.fasilitas.split(",").map(function (f) { return f.trim(); }).filter(Boolean)
           .map(function (f) { return '<span class="chip">' + esc(f) + "</span>"; }).join("");
-        return "<tr><td>" + (t.id === "suite" ? '<span class="badge badge-gold">' + esc(t.nama) + "</span>" : '<span class="cell-strong">' + esc(t.nama) + "</span>") + "</td>" +
+        return "<tr><td>" + tipeBadge(t.id) + "</td>" +
           '<td><span class="price">' + rupiah(t.harga) + " <small>/ malam</small></span></td>" +
           "<td>" + t.kapasitas + " tamu</td>" +
           '<td><div class="chips">' + chips + "</div></td>" +
@@ -292,18 +295,18 @@
           return '<button class="legend-item' + (activeStatus === s ? " is-active" : "") + '" data-st="' + s + '"><i class="bg-' + s + '"></i>' + STATUS[s] + " <b>" + n + "</b></button>";
         }).join("");
       var list = b.filter(function (k) { return !activeStatus || k.status === activeStatus; }).sort(sortKamar);
-      var byFloor = {};
-      list.forEach(function (k) { (byFloor[k.lantai] = byFloor[k.lantai] || []).push(k); });
-      var html = Object.keys(byFloor).sort().map(function (n) {
-        return '<section class="floor"><div class="floor-head"><h3>Lantai ' + n + "</h3><span>" + byFloor[n].length + ' kamar</span></div><div class="grid grid-rooms">' +
-          byFloor[n].map(function (k) {
-            return '<div class="room-tile room-' + k.status + '" role="button" tabindex="0" data-no="' + esc(k.no) + '" aria-label="Kamar ' + esc(k.no) + ", " + STATUS[k.status] + '">' +
-              '<div class="room-no">' + esc(k.no) + '</div><div class="room-type">' + esc(tipeNama(k.tipe)) + '</div><div class="room-status">' + STATUS[k.status] + "</div>" +
-              (k.status === "cleaning" && k.petugas ? '<div class="room-staff">Petugas: ' + esc(k.petugas) + "</div>" : "") + "</div>";
-          }).join("") + "</div></section>";
-      }).join("");
-      $("#grid").innerHTML = html;
-      $("#grid-empty").classList.toggle("hidden", list.length > 0);
+        var byFloor = {};
+        list.forEach(function (k) { (byFloor[k.lantai] = byFloor[k.lantai] || []).push(k); });
+        var html = Object.keys(byFloor).sort().map(function (n) {
+          return '<section class="floor"><div class="floor-head"><h3>Lantai ' + n + "</h3><span>" + byFloor[n].length + ' kamar</span></div><div class="grid grid-rooms">' +
+            byFloor[n].map(function (k) {
+              return '<div class="room-tile room-' + k.status + '" role="button" tabindex="0" data-no="' + esc(k.no) + '" aria-label="Kamar ' + esc(k.no) + ", " + STATUS[k.status] + '">' +
+                '<div class="room-no">' + esc(k.no) + '</div><div class="room-type">' + esc(tipeNama(k.tipe)) + '</div><div class="room-status">' + STATUS[k.status] + "</div>" +
+                (k.status === "cleaning" && k.petugas ? '<div class="room-staff">Petugas: ' + esc(k.petugas) + "</div>" : "") + "</div>";
+            }).join("") + "</div></section>";
+        }).join("");
+        $("#grid").innerHTML = html;
+        $("#grid-empty").classList.toggle("hidden", list.length > 0);
     }
 
     $("#legend").addEventListener("click", function (e) {
