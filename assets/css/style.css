@@ -1,13 +1,6 @@
-/* =========================================================
-   Design System v2 - Sistem Manajemen Hotel (Capstone PBOL)
-   Pemilik: Anggota 1 (KOM)
-   Catatan: radius diubah dari 8px (dokumen) ke 4px agar
-   tampilan lebih tegas dan profesional.
-   ========================================================= */
-
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap");
 
-/* ---------- 1. Token ---------- */
+
 :root {
   /* Warna utama */
   --color-primary: #1e3a5f;
@@ -19,12 +12,12 @@
   --color-text-muted: #6b7280;
   --color-border: #e5e7eb;
 
-  /* Kanal RGB (untuk permainan opacity: rgba(var(--x-rgb), .1)) */
+
   --primary-rgb: 30, 58, 95;
   --secondary-rgb: 42, 157, 143;
   --accent-rgb: 201, 162, 75;
 
-  /* Status kamar (WAJIB konsisten di semua halaman) */
+
   --status-available: #2e9e5b;
   --status-occupied: #3b82f6;
   --status-reserved: #8b5cf6;
@@ -37,31 +30,30 @@
   --cleaning-rgb: 242, 169, 59;
   --maintenance-rgb: 214, 69, 69;
 
-  /* Teks status (versi lebih gelap agar terbaca di latar transparan) */
   --available-ink: #1f7a44;
   --occupied-ink: #1d5fd1;
   --reserved-ink: #6d3fd0;
   --cleaning-ink: #94590a;
   --maintenance-ink: #a82f2f;
 
-  /* Garis & hover */
+
   --line: rgba(var(--primary-rgb), 0.12);
   --line-strong: rgba(var(--primary-rgb), 0.28);
   --primary-dark: #162d4a;
   --secondary-dark: #228176;
   --danger-dark: #b93a3a;
 
-  /* Tipografi */
+
   --font-heading: "Poppins", sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
 
-  /* Bentuk */
+
   --radius: 4px;
   --radius-sm: 2px;
   --shadow: 0 1px 2px rgba(var(--primary-rgb), 0.06);
   --shadow-lg: 0 18px 40px rgba(var(--primary-rgb), 0.22);
 
-  /* Jarak */
+
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -69,12 +61,12 @@
   --space-5: 24px;
   --space-6: 32px;
 
-  /* Layout (dipakai saat membuat sidebar/navbar) */
+   
   --sidebar-width: 260px;
   --navbar-height: 64px;
 }
 
-/* ---------- 2. Reset & dasar ---------- */
+
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
