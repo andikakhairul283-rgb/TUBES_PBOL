@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | Sistem Manajemen Hotel</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+</head>
+<body>
+<div id="page">
+
+  <div class="page-head">
+    <div><h1>Dashboard</h1><p class="text-muted mb-0">Ringkasan operasional hari ini</p></div>
+    <a class="btn btn-primary" href="reservasi/reservasi-baru.html">Reservasi baru</a>
+  </div>
+
+  <div class="grid grid-4 mb-5">
+    <div class="stat"><div><div class="stat-label">Okupansi hari ini</div><div class="stat-value">78%</div><div class="stat-note">39 dari 50 kamar</div></div><div class="stat-icon">&#9632;</div></div>
+    <div class="stat"><div><div class="stat-label">Check-in hari ini</div><div class="stat-value">12</div><div class="stat-note">5 belum tiba</div></div><div class="stat-icon is-teal">&#9650;</div></div>
+    <div class="stat"><div><div class="stat-label">Check-out hari ini</div><div class="stat-value">9</div><div class="stat-note">2 menunggu pembayaran</div></div><div class="stat-icon is-gold">&#9660;</div></div>
+    <div class="stat"><div><div class="stat-label">Kamar tersedia</div><div class="stat-value">5</div><div class="stat-note">3 sedang dibersihkan</div></div><div class="stat-icon is-teal">&#9679;</div></div>
+  </div>
+
+  <div class="grid grid-dash mb-5">
+    <div class="card">
+      <div class="card-header">Pendapatan 7 hari terakhir</div>
+      <div class="card-body"><div class="chart-box"><canvas id="chart-pendapatan"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">Status kamar</div>
+      <div class="card-body">
+        <div class="status-row"><span class="status-name">Terisi</span><span class="bar"><i class="bg-occupied" style="width:78%"></i></span><b>39</b></div>
+        <div class="status-row"><span class="status-name">Tersedia</span><span class="bar"><i class="bg-available" style="width:10%"></i></span><b>5</b></div>
+        <div class="status-row"><span class="status-name">Dipesan</span><span class="bar"><i class="bg-reserved" style="width:4%"></i></span><b>2</b></div>
+        <div class="status-row"><span class="status-name">Dibersihkan</span><span class="bar"><i class="bg-cleaning" style="width:6%"></i></span><b>3</b></div>
+        <div class="status-row"><span class="status-name">Maintenance</span><span class="bar"><i class="bg-maintenance" style="width:2%"></i></span><b>1</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-between mb-4"><h3 class="mb-0">Reservasi terbaru</h3><a href="reservasi/daftar-reservasi.html">Lihat semua</a></div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Kode</th><th>Tamu</th><th>Kamar</th><th>Check-in</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>RSV-0041</td><td>Budi Santoso</td><td>101 &middot; Standard</td><td>02 Nov 2026</td><td><span class="badge badge-reserved">Dipesan</span></td></tr>
+        <tr><td>RSV-0040</td><td>Siti Rahma</td><td>102 &middot; Deluxe</td><td>01 Nov 2026</td><td><span class="badge badge-occupied">Terisi</span></td></tr>
+        <tr><td>RSV-0039</td><td>Andi Pratama</td><td>201 &middot; Suite</td><td>30 Okt 2026</td><td><span class="badge badge-occupied">Terisi</span></td></tr>
+        <tr><td>RSV-0038</td><td>Dewi Lestari</td><td>105 &middot; Standard</td><td>30 Okt 2026</td><td><span class="badge badge-available">Selesai</span></td></tr>
+        <tr><td>RSV-0037</td><td>Rizky Hidayat</td><td>203 &middot; Deluxe</td><td>29 Okt 2026</td><td><span class="badge badge-maintenance">Dibatalkan</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script src="../assets/js/layout.js" data-root="../"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  // Data contoh (juta rupiah). Ganti dengan data asli dari backend.
+  new Chart(document.getElementById("chart-pendapatan"), {
+    type: "bar",
+    data: {
+      labels: ["27 Okt", "28 Okt", "29 Okt", "30 Okt", "31 Okt", "01 Nov", "02 Nov"],
+      datasets: [{ data: [14.2, 16.8, 15.1, 18.4, 21.0, 19.6, 17.3], backgroundColor: "#2a9d8f", borderRadius: 2, maxBarThickness: 36 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return "Rp " + c.parsed.y + " jt"; } } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { callback: function (v) { return v + " jt"; } } }
+      }
+    }
+  });
+</script>
+</body>
+</html>
