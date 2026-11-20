@@ -55,7 +55,3 @@ Kode utama berada di `src/main/java/com/example/tubespbolkel7` dan dijalankan me
 - **Komposisi** diterapkan saat `HotelData` mengelola objek `RoomInventory`, `GuestRegistry`, dan `ServiceLedger`.
 - **Pewarisan dan overriding** digunakan oleh `HelloApplication` yang mewarisi `Application` dan meng-override `start`, serta oleh `LoginView` yang mewarisi `Pane` dan meng-override `layoutChildren`.
 - **Interface dan event handling** digunakan dalam pemeriksaan login melalui `LoginForm.Credentials` dan dalam penanganan klik tombol serta perubahan pilihan di JavaFX.
-
-## Status penyimpanan data
-
-Data saat ini disimpan di memori dan dapat diakses saat berpindah peran melalui tombol **Keluar**. Data sesi akan hilang setelah aplikasi ditutup. SQLite direncanakan untuk penyimpanan permanen.
