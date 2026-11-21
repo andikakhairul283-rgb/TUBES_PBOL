@@ -12,8 +12,19 @@ import java.sql.Statement;
 public final class Database {
     private static final Path DEFAULT_FILE = Path.of(System.getProperty("user.home"), ".checkin-id", "hotel.db");
 
+    private static Database shared;
+
     private final Path file;
     private final String url;
+
+    /** Database tunggal yang dipakai seluruh aplikasi. Tabel dibuat otomatis saat pertama dipanggil. */
+    public static synchronized Database shared() {
+        if (shared == null) {
+            shared = new Database();
+            shared.init();
+        }
+        return shared;
+    }
 
     public Database() { this(DEFAULT_FILE); }
 
