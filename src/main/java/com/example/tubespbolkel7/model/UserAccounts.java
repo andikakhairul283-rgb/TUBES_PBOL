@@ -1,5 +1,8 @@
 package com.example.tubespbolkel7.model;
 
+import com.example.tubespbolkel7.db.Database;
+import com.example.tubespbolkel7.db.UserRepository;
+
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -17,6 +20,17 @@ public final class UserAccounts {
 
     private static final SecureRandom RANDOM = new SecureRandom();
     private final Map<String, Entry> entries = new LinkedHashMap<>();
+    private final UserRepository repository;
+
+    public UserAccounts() { this(new UserRepository(Database.shared())); }
+
+    public UserAccounts(UserRepository repository) {
+        this.repository = repository;
+        for (UserRepository.Row row : repository.loadAll()) {
+            Account account = new Account(row.username(), row.name(), Role.valueOf(row.role()), row.enabled());
+            entries.put(key(row.username()), new Entry(account, new Credential(row.salt(), row.hash())));
+        }
+    }
 
     public List<Account> all() { return entries.values().stream().map(Entry::account).toList(); }
 
@@ -38,7 +52,7 @@ public final class UserAccounts {
         }
         if (entries.containsKey(key(username))) throw new IllegalArgumentException("Username sudah terdaftar.");
         validateProfile(name, role);
-        entries.put(key(username), new Entry(new Account(username, name, role, enabled), credential(password)));
+        store(new Entry(new Account(username, name, role, enabled), credential(password)));
     }
 
     public void update(String username, String name, Role role, boolean enabled, String actor) {
@@ -47,18 +61,26 @@ public final class UserAccounts {
         if (key(username).equals(key(actor)) && (!enabled || role != Role.OWNER)) {
             throw new IllegalArgumentException("Akun Owner yang sedang digunakan harus tetap aktif sebagai Owner.");
         }
-        entries.put(key(username), new Entry(new Account(entry.account().username(), name, role, enabled), entry.credential()));
+        store(new Entry(new Account(entry.account().username(), name, role, enabled), entry.credential()));
     }
 
     public void resetPassword(String username, String password) {
         Entry entry = require(username);
-        entries.put(key(username), new Entry(entry.account(), credential(password)));
+        store(new Entry(entry.account(), credential(password)));
     }
 
     public void changePassword(String username, String oldPassword, String newPassword) {
         Entry entry = require(username);
         if (!verifies(entry.credential(), oldPassword)) throw new IllegalArgumentException("Kata sandi lama salah.");
         resetPassword(username, newPassword);
+    }
+
+    /** Simpan ke database lebih dulu, baru ke memori, agar keduanya tetap sama bila penyimpanan gagal. */
+    private void store(Entry entry) {
+        Account account = entry.account();
+        repository.save(new UserRepository.Row(account.username(), account.name(), account.role().name(),
+                account.enabled(), entry.credential().salt(), entry.credential().hash()));
+        entries.put(key(account.username()), entry);
     }
 
     private Entry require(String username) {

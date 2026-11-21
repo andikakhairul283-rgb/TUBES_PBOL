@@ -1,5 +1,8 @@
 package com.example.tubespbolkel7.model;
 
+import com.example.tubespbolkel7.db.Database;
+import com.example.tubespbolkel7.db.GuestRepository;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +14,17 @@ public final class GuestRegistry {
 
     private final Map<String, Guest> guests = new LinkedHashMap<>();
     private int next = 1;
+    private final GuestRepository repository;
+
+    public GuestRegistry() { this(new GuestRepository(Database.shared())); }
+
+    public GuestRegistry(GuestRepository repository) {
+        this.repository = repository;
+        for (GuestRepository.Row row : repository.loadAll()) {
+            guests.put(row.id(), new Guest(row.id(), row.name(), row.phone(), row.email(), row.identity(), row.vip(), row.notes()));
+            if (row.id().matches("TMU-[0-9]+")) next = Math.max(next, Integer.parseInt(row.id().substring(4)) + 1);
+        }
+    }
 
     public List<Guest> all() { return List.copyOf(guests.values()).reversed(); }
     public Guest find(String id) { return guests.get(id); }
@@ -37,8 +51,10 @@ public final class GuestRegistry {
                 && guest.identity().equalsIgnoreCase(identity))) {
             throw new IllegalArgumentException("Nomor identitas sudah terdaftar.");
         }
-        String id = original == null ? "TMU-%04d".formatted(next++) : original.id();
+        String id = original == null ? "TMU-%04d".formatted(next) : original.id();
         Guest guest = new Guest(id, name, phone, email, identity, vip, notes);
+        repository.save(new GuestRepository.Row(id, name, phone, email, identity, vip, notes));
+        if (original == null) next++;
         guests.put(id, guest);
         return guest;
     }

@@ -1,5 +1,8 @@
 package com.example.tubespbolkel7.model;
 
+import com.example.tubespbolkel7.db.BookingRepository;
+import com.example.tubespbolkel7.db.Database;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -53,6 +56,9 @@ public final class HotelData {
     private final HotelSettings settings = new HotelSettings();
     private final FrontDeskNotes frontDesk = new FrontDeskNotes();
     private int nextNumber = 1;
+    private final BookingRepository repository = new BookingRepository(Database.shared());
+
+    public HotelData() { restore(); }
 
     public ObservableList<Booking> bookings() { return view; }
     public ServiceLedger services() { return services; }
@@ -138,6 +144,7 @@ public final class HotelData {
             bookings.set(bookings.indexOf(booking), new Booking(booking.code(), booking.guest(), room, booking.arrival(),
                     booking.departure(), booking.status(), booking.deposit(), booking.notes()));
         }
+        persist();
     }
 
     public void removeRoomType(Type type) {
@@ -217,6 +224,7 @@ public final class HotelData {
         } else {
             bookings.set(bookings.indexOf(old), item);
         }
+        persist();
     }
 
     public long servicesTotal(Booking item) { return services.serviceTotal(item.code()); }
@@ -247,12 +255,14 @@ public final class HotelData {
             throw new IllegalArgumentException("Jaminan hanya dapat dicatat sekali sebelum check-in, dengan nominal Rp 1–100.000.000.");
         }
         securityDeposits.put(code, new SecurityDeposit(amount, false));
+        persist();
     }
 
     public void returnSecurityDeposit(String code) {
         SecurityDeposit deposit = securityDeposit(code);
         if (deposit == null || deposit.returned()) throw new IllegalArgumentException("Tidak ada jaminan yang perlu dikembalikan.");
         securityDeposits.put(code, new SecurityDeposit(deposit.amount(), true));
+        persist();
     }
 
     public void cancel(String code) {
@@ -322,6 +332,55 @@ public final class HotelData {
             throw new IllegalArgumentException("Nomor bukti transaksi sudah tercatat.");
         }
         receipts.add(new Receipt(code, today(), amount, method, proof, false));
+        persist();
+    }
+
+    /** Menyimpan seluruh reservasi, pembayaran, dan jaminan ke database setiap kali ada perubahan. */
+    private void persist() {
+        repository.save(new BookingRepository.Snapshot(
+                bookings.stream().map(item -> {
+                    Stay stay = stays.get(item.code());
+                    HotelSettings.Pricing price = pricing(item.code());
+                    return new BookingRepository.ReservationRow(item.code(), guestByBooking.get(item.code()),
+                            item.room().number(), item.room().type(), item.room().rate(), item.arrival().toString(),
+                            item.departure().toString(), item.status().name(), item.deposit(), item.notes(),
+                            keycard(item.code()), stay == null ? null : stay.checkIn().toString(),
+                            stay == null || stay.checkOut() == null ? null : stay.checkOut().toString(),
+                            "%d,%d,%d,%d".formatted(price.hotelTax(), price.serviceCharge(), price.securityDeposit(),
+                                    price.weekendSurcharge()));
+                }).toList(),
+                receipts.stream().map(item -> new BookingRepository.ReceiptRow(item.code(), item.date().toString(),
+                        item.amount(), item.method(), item.reference(), item.deposit())).toList(),
+                securityDeposits.entrySet().stream().map(entry -> new BookingRepository.DepositRow(entry.getKey(),
+                        entry.getValue().amount(), entry.getValue().returned())).toList()));
+    }
+
+    private void restore() {
+        BookingRepository.Snapshot saved = repository.load();
+        for (BookingRepository.ReservationRow row : saved.reservations()) {
+            Guest guest = guests.find(row.guestId());
+            Room room = new Room(row.roomNumber(), row.roomType(), row.roomRate());
+            bookings.add(new Booking(row.code(), guest == null ? "" : guest.name(), room, LocalDate.parse(row.arrival()),
+                    LocalDate.parse(row.departure()), Status.valueOf(row.status()), row.deposit(), row.notes()));
+            guestByBooking.put(row.code(), row.guestId());
+            if (!row.keycard().isBlank()) keycards.put(row.code(), row.keycard());
+            if (row.checkedInOn() != null) {
+                stays.put(row.code(), new Stay(LocalDate.parse(row.checkedInOn()),
+                        row.checkedOutOn() == null ? null : LocalDate.parse(row.checkedOutOn())));
+            }
+            if (row.pricing() != null) {
+                String[] part = row.pricing().split(",");
+                pricingByBooking.put(row.code(), new HotelSettings.Pricing(Integer.parseInt(part[0]),
+                        Integer.parseInt(part[1]), Long.parseLong(part[2]), Integer.parseInt(part[3])));
+            }
+            if (row.code().matches("RSV-[0-9]+")) nextNumber = Math.max(nextNumber, Integer.parseInt(row.code().substring(4)) + 1);
+        }
+        for (BookingRepository.ReceiptRow row : saved.receipts()) {
+            receipts.add(new Receipt(row.code(), LocalDate.parse(row.date()), row.amount(), row.method(), row.reference(), row.deposit()));
+        }
+        for (BookingRepository.DepositRow row : saved.deposits()) {
+            securityDeposits.put(row.code(), new SecurityDeposit(row.amount(), row.returned()));
+        }
     }
 
     private Booking requireBooking(String code) {
@@ -333,6 +392,7 @@ public final class HotelData {
     private void setStatus(Booking item, Status status) {
         bookings.set(bookings.indexOf(item), new Booking(item.code(), item.guest(), item.room(), item.arrival(),
                 item.departure(), status, item.deposit(), item.notes()));
+        persist();
     }
 
     private long paymentsFor(String code) {
