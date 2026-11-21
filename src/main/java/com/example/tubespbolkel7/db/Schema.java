@@ -70,6 +70,31 @@ final class Schema {
             minimum  INTEGER NOT NULL CHECK (minimum >= 0)
         )""",
         """
+        CREATE TABLE IF NOT EXISTS service_catalog (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            name      TEXT NOT NULL UNIQUE COLLATE NOCASE,
+            category  TEXT NOT NULL CHECK (category IN ('LAUNDRY','FOOD','BED','OTHER')),
+            unit      TEXT NOT NULL,
+            price     INTEGER NOT NULL CHECK (price >= 0),
+            available INTEGER NOT NULL DEFAULT 1
+        )""",
+        """
+        CREATE TABLE IF NOT EXISTS service_orders (
+            code             TEXT PRIMARY KEY,
+            created          TEXT NOT NULL,
+            reservation_code TEXT NOT NULL REFERENCES reservations(code),
+            room_number      TEXT NOT NULL,
+            guest_name       TEXT NOT NULL,
+            item_name        TEXT NOT NULL,
+            item_category    TEXT NOT NULL,
+            item_unit        TEXT NOT NULL,
+            item_price       INTEGER NOT NULL,
+            item_available   INTEGER NOT NULL DEFAULT 1,
+            quantity         INTEGER NOT NULL CHECK (quantity > 0),
+            status           TEXT NOT NULL CHECK (status IN ('PROCESSING','DELIVERED','COMPLETE','CANCELLED')),
+            notes            TEXT NOT NULL DEFAULT ''
+        )""",
+        """
         CREATE TABLE IF NOT EXISTS guests (
             id       TEXT PRIMARY KEY,
             name     TEXT NOT NULL,
@@ -115,6 +140,7 @@ final class Schema {
         )""",
         "CREATE INDEX IF NOT EXISTS idx_res_room_dates ON reservations(room_number, arrival, departure)",
         "CREATE INDEX IF NOT EXISTS idx_res_status ON reservations(status)",
-        "CREATE INDEX IF NOT EXISTS idx_receipts_res ON receipts(reservation_code)"
+        "CREATE INDEX IF NOT EXISTS idx_receipts_res ON receipts(reservation_code)",
+        "CREATE INDEX IF NOT EXISTS idx_service_res ON service_orders(reservation_code)"
     );
 }

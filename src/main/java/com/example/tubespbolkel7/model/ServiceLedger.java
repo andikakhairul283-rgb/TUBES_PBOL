@@ -1,5 +1,8 @@
 package com.example.tubespbolkel7.model;
 
+import com.example.tubespbolkel7.db.Database;
+import com.example.tubespbolkel7.db.ServiceRepository;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -80,6 +83,25 @@ public final class ServiceLedger {
     private final ObservableList<CatalogItem> catalogView = FXCollections.unmodifiableObservableList(catalog);
     private final ObservableList<Order> ordersView = FXCollections.unmodifiableObservableList(orders);
     private int nextCode = 1;
+    private final ServiceRepository repository;
+
+    public ServiceLedger() { this(new ServiceRepository(Database.shared())); }
+
+    public ServiceLedger(ServiceRepository repository) {
+        this.repository = repository;
+        ServiceRepository.Snapshot saved = repository.load();
+        if (saved.catalog().isEmpty()) {
+            persist();
+            return;
+        }
+        catalog.setAll(saved.catalog().stream().map(ServiceLedger::toItem).toList());
+        orders.setAll(saved.orders().stream().map(row -> new Order(row.code(), LocalDateTime.parse(row.created()),
+                new RoomGuest(row.reservation(), row.room(), row.guest()), toItem(row.item()), row.quantity(),
+                Status.valueOf(row.status()), row.notes())).toList());
+        for (Order order : orders) {
+            if (order.code().matches("LYN-[0-9]+")) nextCode = Math.max(nextCode, Integer.parseInt(order.code().substring(4)) + 1);
+        }
+    }
 
     public ObservableList<CatalogItem> catalog() { return catalogView; }
 
@@ -91,6 +113,7 @@ public final class ServiceLedger {
         }
         Order order = new Order(nextOrderCode(), time, guest, item, quantity, Status.PROCESSING, notes.strip());
         orders.add(0, order);
+        persist();
         return order;
     }
 
@@ -100,6 +123,7 @@ public final class ServiceLedger {
             throw new IllegalArgumentException("Status pesanan sudah berubah. Buka kembali detail pesanan.");
         }
         orders.set(index, order.withStatus(status));
+        persist();
     }
 
     public void saveItem(CatalogItem original, CatalogItem item) {
@@ -118,6 +142,7 @@ public final class ServiceLedger {
             }
             catalog.set(index, item);
         }
+        persist();
     }
 
     public long serviceTotal(String reservationCode) {
@@ -127,6 +152,23 @@ public final class ServiceLedger {
         return orders.stream().filter(order -> order.status() != Status.CANCELLED
                         && reservationCode.equals(order.roomGuest().reservation()))
                 .mapToLong(Order::subtotal).sum();
+    }
+
+    /** Menyimpan katalog dan seluruh pesanan ke database setiap kali ada perubahan. */
+    private void persist() {
+        repository.save(new ServiceRepository.Snapshot(
+                catalog.stream().map(ServiceLedger::toRow).toList(),
+                orders.stream().map(order -> new ServiceRepository.OrderRow(order.code(), order.created().toString(),
+                        order.roomGuest().reservation(), order.roomGuest().room(), order.roomGuest().guest(),
+                        toRow(order.item()), order.quantity(), order.status().name(), order.notes())).toList()));
+    }
+
+    private static ServiceRepository.ItemRow toRow(CatalogItem item) {
+        return new ServiceRepository.ItemRow(item.name(), item.category().name(), item.unit(), item.price(), item.available());
+    }
+
+    private static CatalogItem toItem(ServiceRepository.ItemRow row) {
+        return new CatalogItem(row.name(), Category.valueOf(row.category()), row.unit(), row.price(), row.available());
     }
 
     private String nextOrderCode() { return "LYN-%03d".formatted(nextCode++); }
