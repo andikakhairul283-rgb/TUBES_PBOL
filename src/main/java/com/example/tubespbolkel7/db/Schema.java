@@ -55,6 +55,12 @@ final class Schema {
             requested   TEXT NOT NULL
         )""",
         """
+        CREATE TABLE IF NOT EXISTS card_requests (
+            room_number TEXT PRIMARY KEY REFERENCES rooms(number),
+            identifier  TEXT NOT NULL,
+            requested   TEXT NOT NULL
+        )""",
+        """
         CREATE TABLE IF NOT EXISTS maintenance_stock (
             id       INTEGER PRIMARY KEY AUTOINCREMENT,
             name     TEXT NOT NULL UNIQUE COLLATE NOCASE,

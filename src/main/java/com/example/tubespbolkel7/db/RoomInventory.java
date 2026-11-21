@@ -1,5 +1,8 @@
 package com.example.tubespbolkel7.model;
 
+import com.example.tubespbolkel7.db.Database;
+import com.example.tubespbolkel7.db.RoomRepository;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -78,12 +81,22 @@ public final class RoomInventory {
     private final MaintenanceStock stock = new MaintenanceStock();
     private int nextTicket = 1;
     private int nextType = 1;
+    private final RoomRepository repository;
 
-    public RoomInventory() {
-        for (Type type : List.of(Type.STANDARD, Type.DELUXE, Type.SUITE)) types.put(type.code, type);
-        register(List.of("101", "102", "105", "108"), 1, Type.STANDARD);
-        register(List.of("201", "204", "208"), 2, Type.DELUXE);
-        register(List.of("302", "305"), 3, Type.SUITE);
+    public RoomInventory() { this(new RoomRepository(Database.shared())); }
+
+    public RoomInventory(RoomRepository repository) {
+        this.repository = repository;
+        RoomRepository.Snapshot saved = repository.load();
+        if (saved.types().isEmpty() && saved.rooms().isEmpty()) {
+            for (Type type : List.of(Type.STANDARD, Type.DELUXE, Type.SUITE)) types.put(type.code, type);
+            register(List.of("101", "102", "105", "108"), 1, Type.STANDARD);
+            register(List.of("201", "204", "208"), 2, Type.DELUXE);
+            register(List.of("302", "305"), 3, Type.SUITE);
+            persist();
+        } else {
+            restore(saved);
+        }
     }
 
     public List<Room> rooms() { return units.values().stream().map(Unit::room).toList(); }
@@ -108,6 +121,7 @@ public final class RoomInventory {
         if (facilities.length() > 400) throw new IllegalArgumentException("Fasilitas maksimal 400 karakter.");
         if (facilities.isBlank()) customFacilities.remove(number);
         else customFacilities.put(number, facilities);
+        persist();
     }
 
     public void requestCard(String number, String identifier) {
@@ -120,6 +134,7 @@ public final class RoomInventory {
             throw new IllegalArgumentException("ID keycard ini tercatat untuk kamar lain.");
         }
         cardRequests.put(number, new CardRequest(identifier, LocalDateTime.now()));
+        persist();
     }
 
     public void saveType(Type original, String label, long rate, int capacity, String facilities) {
@@ -138,6 +153,7 @@ public final class RoomInventory {
                     ? new Unit(new Room(number, label, rate), unit.floor(), replacement, unit.condition(), unit.notes())
                     : unit);
         }
+        persist();
     }
 
     public void removeType(Type type) {
@@ -145,6 +161,7 @@ public final class RoomInventory {
             throw new IllegalArgumentException("Pindahkan kamar yang memakai tipe ini sebelum menghapusnya.");
         }
         types.remove(type.code, type);
+        persist();
     }
 
     public void remove(String number) {
@@ -155,6 +172,7 @@ public final class RoomInventory {
         units.remove(number);
         customFacilities.remove(number);
         cardRequests.remove(number);
+        persist();
     }
 
     public void save(String number, int floor, Type type, Condition condition, String notes, boolean newRoom, boolean activeBooking) {
@@ -172,6 +190,7 @@ public final class RoomInventory {
         units.put(number, new Unit(new Room(number, type.label, type.rate), floor, type,
                 existing == null ? Condition.READY : existing.condition(), notes));
         setCondition(number, condition);
+        persist();
     }
 
     public void setCondition(String room, Condition condition) {
@@ -185,6 +204,7 @@ public final class RoomInventory {
                     condition == Condition.CLEANING ? "Pembersihan kamar" : "Pemeriksaan kondisi kamar", "", 0));
         }
         updateCondition(unit, condition);
+        persist();
     }
 
     public void report(String room, Condition condition, Priority priority, String description, String assignee, int estimatedMinutes) {
@@ -198,6 +218,7 @@ public final class RoomInventory {
         }
         jobs.addFirst(newJob(room, condition, priority, description.strip(), assignee.strip(), estimatedMinutes));
         updateCondition(unit, condition);
+        persist();
     }
 
     public void editJob(Job job, Priority priority, String description, String assignee, int estimatedMinutes) {
@@ -206,12 +227,14 @@ public final class RoomInventory {
         validateJob(description, assignee, estimatedMinutes);
         jobs.set(index, new Job(job.code(), job.room(), job.condition(), priority, description.strip(), assignee.strip(),
                 job.opened(), null, estimatedMinutes));
+        persist();
     }
 
     public void finish(Job job) {
         int index = requireActiveJob(job);
         jobs.set(index, finished(job));
         updateCondition(requireUnit(job.room()), Condition.READY);
+        persist();
     }
 
     public void requestMaterial(Job job, String name, int quantity) {
@@ -220,6 +243,49 @@ public final class RoomInventory {
             throw new IllegalArgumentException("Masukkan nama material dan jumlah 1–1000.");
         }
         materials.addFirst(new Material(job.code(), job.room(), name.strip(), quantity, LocalDateTime.now()));
+        persist();
+    }
+
+    /** Menyimpan seluruh keadaan kamar ke database setiap kali ada perubahan. */
+    private void persist() {
+        repository.save(new RoomRepository.Snapshot(
+                types.values().stream().map(type -> new RoomRepository.TypeRow(
+                        type.code, type.label, type.rate, type.capacity, type.facilities)).toList(),
+                units.values().stream().map(unit -> new RoomRepository.RoomRow(unit.room().number(), unit.floor(),
+                        unit.type().code, unit.condition().name(), unit.notes(),
+                        customFacilities.getOrDefault(unit.room().number(), ""))).toList(),
+                jobs.stream().map(job -> new RoomRepository.JobRow(job.code(), job.room(), job.condition().name(),
+                        job.priority().name(), job.description(), job.assignee(), job.opened().toString(),
+                        job.finished() == null ? null : job.finished().toString(), job.estimatedMinutes())).toList(),
+                materials.reversed().stream().map(item -> new RoomRepository.MaterialRow(item.job(), item.room(),
+                        item.name(), item.quantity(), item.requested().toString())).toList(),
+                cardRequests.entrySet().stream().map(entry -> new RoomRepository.CardRow(entry.getKey(),
+                        entry.getValue().identifier(), entry.getValue().requested().toString())).toList()));
+    }
+
+    private void restore(RoomRepository.Snapshot saved) {
+        for (RoomRepository.TypeRow row : saved.types()) {
+            types.put(row.code(), new Type(row.code(), row.label(), row.rate(), row.capacity(), row.facilities()));
+            if (row.code().matches("TIPE-[0-9]+")) nextType = Math.max(nextType, Integer.parseInt(row.code().substring(5)) + 1);
+        }
+        for (RoomRepository.RoomRow row : saved.rooms()) {
+            Type type = types.get(row.typeCode());
+            units.put(row.number(), new Unit(new Room(row.number(), type.label, type.rate), row.floor(), type,
+                    Condition.valueOf(row.condition()), row.notes()));
+            if (!row.customFacilities().isBlank()) customFacilities.put(row.number(), row.customFacilities());
+        }
+        for (RoomRepository.JobRow row : saved.jobs()) {
+            jobs.add(new Job(row.code(), row.room(), Condition.valueOf(row.condition()), Priority.valueOf(row.priority()),
+                    row.description(), row.assignee(), LocalDateTime.parse(row.opened()),
+                    row.finished() == null ? null : LocalDateTime.parse(row.finished()), row.estimatedMinutes()));
+            if (row.code().matches("WO-[0-9]+")) nextTicket = Math.max(nextTicket, Integer.parseInt(row.code().substring(3)) + 1);
+        }
+        for (RoomRepository.MaterialRow row : saved.materials()) {
+            materials.add(new Material(row.job(), row.room(), row.name(), row.quantity(), LocalDateTime.parse(row.requested())));
+        }
+        for (RoomRepository.CardRow row : saved.cards()) {
+            cardRequests.put(row.room(), new CardRequest(row.identifier(), LocalDateTime.parse(row.requested())));
+        }
     }
 
     private void register(List<String> numbers, int floor, Type type) {
