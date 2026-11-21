@@ -3,6 +3,8 @@ package com.example.tubespbolkel7.ui.login;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -10,8 +12,13 @@ import static com.example.tubespbolkel7.ui.login.LoginLayout.Layer;
 import static com.example.tubespbolkel7.ui.login.LoginLayout.number;
 
 final class LoginArtwork {
+    private static final double BOTTOM_ANCHOR_THRESHOLD = 0.8;
+
+    private LoginArtwork() { }
+
     record Anchor(Layer layer, double x, double y) {
         Anchor find(Predicate<Layer> matches) {
+            Objects.requireNonNull(matches, "Predicate pencarian layer tidak boleh null");
             Anchor result = findDescendant(matches);
             if (result == null) {
                 throw new IllegalArgumentException("Komponen login tidak ditemukan di " + layer.name());
@@ -24,7 +31,8 @@ final class LoginArtwork {
                 return this;
             }
             for (Layer child : layer.children()) {
-                Anchor result = new Anchor(child, x + offsetX(child), y + offsetY(child)).findDescendant(matches);
+                Anchor candidate = new Anchor(child, x + offsetX(child), y + offsetY(child));
+                Anchor result = candidate.findDescendant(matches);
                 if (result != null) {
                     return result;
                 }
@@ -41,43 +49,66 @@ final class LoginArtwork {
         Layer footer = section(screen, "Window Footer");
         Layer left = section(body, "Section - LEFT HALF");
         Layer right = section(body, "Section - RIGHT HALF");
+
+        if (right.children().isEmpty()) {
+            throw new IllegalStateException("Layer card pada panel kanan tidak ditemukan.");
+        }
         Layer card = right.children().getFirst();
 
-        double half = width / 2;
-        double bodyHeight = height - header.height() - footer.height();
+        double halfWidth = width / 2.0;
+        double bodyHeight = Math.max(0, height - header.height() - footer.height());
         double bodyHeightDelta = bodyHeight - body.height();
-        double leftWidthDelta = half - left.width();
-        double cardX = (half - card.width()) / 2;
-        double cardY = (bodyHeight - card.height()) / 2;
+        double leftWidthDelta = halfWidth - left.width();
+        double cardX = (halfWidth - card.width()) / 2.0;
+        double cardY = (bodyHeight - card.height()) / 2.0;
 
-        List<Layer> leftContents = left.children().stream().map(layer -> {
-            if (layer.name().startsWith("Subtle luxury gold line")) {
-                return position(size(layer, layer.width(), bodyHeight), half - layer.width(), 0);
-            }
-            if (layer.name().equals("Overlay+Blur")) {
-                return position(layer, offsetX(layer) + leftWidthDelta, offsetY(layer) + bodyHeightDelta);
-            }
-            if (layer.name().startsWith("Left Bottom Legal") || offsetY(layer) > left.height() * 0.8) {
-                return position(layer, offsetX(layer), offsetY(layer) + bodyHeightDelta);
-            }
-            return layer;
-        }).toList();
-        Layer leftPanel = children(size(left, half, bodyHeight), leftContents);
-        Layer rightPanel = position(children(size(right, half, bodyHeight),
-                List.of(position(card, cardX, cardY))), half, 0);
-        Layer split = position(children(size(body, width, bodyHeight), List.of(leftPanel, rightPanel)), 0, header.height());
+        List<Layer> leftContents = left.children().stream()
+                .map(layer -> adjustLeftLayer(layer, left.height(), halfWidth, leftWidthDelta, bodyHeight, bodyHeightDelta))
+                .toList();
+
+        Layer leftPanel = children(size(left, halfWidth, bodyHeight), leftContents);
+        Layer rightPanel = position(
+                children(size(right, halfWidth, bodyHeight), List.of(position(card, cardX, cardY))),
+                halfWidth, 0
+        );
+        Layer split = position(
+                children(size(body, width, bodyHeight), List.of(leftPanel, rightPanel)),
+                0, header.height()
+        );
+
         double widthDelta = width - screen.width();
+        Layer topBar = wideBar(header, width, widthDelta);
         Layer bottomBar = position(wideBar(footer, width, widthDelta), 0, height - footer.height());
-        Layer viewport = children(size(screen, width, height), List.of(wideBar(header, width, widthDelta), split, bottomBar));
-        return new Fit(viewport, half + cardX - offsetX(right) - offsetX(card),
-                header.height() + cardY - offsetY(body) - offsetY(card));
+        Layer viewport = children(size(screen, width, height), List.of(topBar, split, bottomBar));
+
+        double formX = halfWidth + cardX - offsetX(right) - offsetX(card);
+        double formY = header.height() + cardY - offsetY(body) - offsetY(card);
+        return new Fit(viewport, formX, formY);
+    }
+
+    private static Layer adjustLeftLayer(Layer layer, double originalLeftHeight, double halfWidth,
+                                         double leftWidthDelta, double bodyHeight, double bodyHeightDelta) {
+        String name = layer.name();
+        if (name.startsWith("Subtle luxury gold line")) {
+            return position(size(layer, layer.width(), bodyHeight), halfWidth - layer.width(), 0);
+        }
+        if (name.equals("Overlay+Blur")) {
+            return position(layer, offsetX(layer) + leftWidthDelta, offsetY(layer) + bodyHeightDelta);
+        }
+        if (name.startsWith("Left Bottom Legal") || offsetY(layer) > originalLeftHeight * BOTTOM_ANCHOR_THRESHOLD) {
+            return position(layer, offsetX(layer), offsetY(layer) + bodyHeightDelta);
+        }
+        return layer;
     }
 
     private static Layer wideBar(Layer bar, double width, double delta) {
-        return children(size(bar, width, bar.height()), bar.children().stream()
-                .map(layer -> offsetX(layer) > bar.width() / 2
-                        ? position(layer, offsetX(layer) + delta, offsetY(layer)) : layer)
-                .toList());
+        double midpoint = bar.width() / 2.0;
+        List<Layer> adjusted = bar.children().stream()
+                .map(layer -> offsetX(layer) > midpoint
+                        ? position(layer, offsetX(layer) + delta, offsetY(layer))
+                        : layer)
+                .toList();
+        return children(size(bar, width, bar.height()), adjusted);
     }
 
     static Layer withoutFooterResolution(Layer screen) {
@@ -86,12 +117,16 @@ final class LoginArtwork {
                 return layer;
             }
             return children(layer, layer.children().stream().map(group -> {
-                if (group.children().stream().noneMatch(item -> item.characters().startsWith("Tampilan Resolusi Desktop"))) {
+                boolean hasResolutionLabel = group.children().stream()
+                        .anyMatch(item -> item.characters().startsWith("Tampilan Resolusi Desktop"));
+                if (!hasResolutionLabel) {
                     return group;
                 }
-                return children(group, group.children().stream()
-                        .filter(item -> !item.characters().startsWith("Tampilan Resolusi Desktop") && !item.characters().equals("•"))
-                        .toList());
+                List<Layer> filtered = group.children().stream()
+                        .filter(item -> !item.characters().startsWith("Tampilan Resolusi Desktop")
+                                && !item.characters().equals("•"))
+                        .toList();
+                return children(group, filtered);
             }).toList());
         }).toList());
     }
@@ -100,8 +135,12 @@ final class LoginArtwork {
         if (layer.id().equals(submitId)) {
             return children(layer, List.of());
         }
-        Layer result = children(layer, layer.children().stream().filter(child -> !hidden.contains(child.id()))
-                .map(child -> withLiveForm(child, hidden, roleCards, submitId)).toList());
+        List<Layer> visibleChildren = layer.children().stream()
+                .filter(child -> !hidden.contains(child.id()))
+                .map(child -> withLiveForm(child, hidden, roleCards, submitId))
+                .toList();
+        Layer result = children(layer, visibleChildren);
+
         if (roleCards.contains(layer.id())) {
             Map<Object, Object> paints = new HashMap<>(result.properties());
             paints.remove("fills");
@@ -112,7 +151,10 @@ final class LoginArtwork {
     }
 
     private static Layer section(Layer parent, String prefix) {
-        return parent.children().stream().filter(child -> child.name().startsWith(prefix)).findFirst().orElseThrow();
+        return parent.children().stream()
+                .filter(child -> child.name().startsWith(prefix))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Section tidak ditemukan: " + prefix));
     }
 
     private static Layer children(Layer layer, List<Layer> children) {
@@ -120,7 +162,7 @@ final class LoginArtwork {
     }
 
     private static Layer size(Layer layer, double width, double height) {
-        if (width == layer.width() && height == layer.height()) {
+        if (Double.compare(width, layer.width()) == 0 && Double.compare(height, layer.height()) == 0) {
             return layer;
         }
         Map<Object, Object> properties = new HashMap<>(layer.properties());
@@ -136,6 +178,11 @@ final class LoginArtwork {
         return new Layer(Map.copyOf(properties), layer.children());
     }
 
-    private static double offsetX(Layer layer) { return number(layer.matrix(), 2, 0); }
-    private static double offsetY(Layer layer) { return number(layer.matrix(), 5, 0); }
+    private static double offsetX(Layer layer) {
+        return number(layer.matrix(), 2, 0);
+    }
+
+    private static double offsetY(Layer layer) {
+        return number(layer.matrix(), 5, 0);
+    }
 }

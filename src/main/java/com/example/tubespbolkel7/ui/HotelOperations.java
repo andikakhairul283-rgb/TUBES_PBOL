@@ -4,10 +4,10 @@ import com.example.tubespbolkel7.model.HotelData;
 import com.example.tubespbolkel7.model.Role;
 import com.example.tubespbolkel7.model.RoomInventory;
 import com.example.tubespbolkel7.model.ServiceLedger;
-
 import javafx.scene.Node;
 import javafx.stage.Window;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -22,21 +22,24 @@ final class HotelOperations {
     private final MaintenanceRoomActions maintenance;
     private final String username;
     private final Role role;
+
     private String selected;
     private String selectedRoom;
     private RoomInventory.Status roomFilter;
 
-    HotelOperations(HotelData data, String username, Role role, Consumer<HotelRoute> navigate, Supplier<Window> window) {
-        this.data = data;
-        this.username = username;
-        this.role = role;
-        this.navigate = navigate;
-        this.window = window;
-        reports = new ReportPages(this, data.today());
-        rooms = new RoomPages(this);
-        housekeeping = new HousekeepingPage(this);
-        settings = new SettingsPages(this);
-        maintenance = new MaintenanceRoomActions(this, housekeeping);
+    HotelOperations(HotelData data, String username, Role role,
+                    Consumer<HotelRoute> navigate, Supplier<Window> window) {
+        this.data = Objects.requireNonNull(data);
+        this.username = Objects.requireNonNull(username);
+        this.role = Objects.requireNonNull(role);
+        this.navigate = Objects.requireNonNull(navigate);
+        this.window = Objects.requireNonNull(window);
+
+        this.reports = new ReportPages(this, data.today());
+        this.rooms = new RoomPages(this);
+        this.housekeeping = new HousekeepingPage(this);
+        this.settings = new SettingsPages(this);
+        this.maintenance = new MaintenanceRoomActions(this, housekeeping);
     }
 
     HotelData data() { return data; }
@@ -49,15 +52,18 @@ final class HotelOperations {
     boolean isMaintenance() { return role == Role.MAINTENANCE; }
     MaintenanceRoomActions maintenance() { return maintenance; }
     HousekeepingPage housekeeping() { return housekeeping; }
+
     RoomInventory.Status consumeRoomFilter() {
         var filter = roomFilter;
         roomFilter = null;
         return filter;
     }
+
     void openRoomGrid(RoomInventory.Status filter) {
         roomFilter = filter;
         open(HotelRoute.ROOM_GRID);
     }
+
     String selectedRoom() { return selectedRoom; }
     void selectRoom(String number) { selectedRoom = number; }
     Window owner() { return window.get(); }

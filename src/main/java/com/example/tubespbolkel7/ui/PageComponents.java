@@ -1,15 +1,36 @@
 package com.example.tubespbolkel7.ui;
 
 import com.example.tubespbolkel7.report.ReportExport;
-
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -29,21 +50,32 @@ final class PageComponents {
     static final int PAGE_SIZE = 8;
     static final Color NAVY = Color.web("#102A4B");
     static final Color TEAL = Color.web("#006A60");
+    static final Color TEAL_HOVER = Color.web("#00554D");
+    static final Color TEAL_FOCUS = Color.web("#2A9D8F");
     static final Color MUTED = Color.web("#596779");
     static final Color PALE = Color.web("#EDF2FE");
+    static final Color PALE_HOVER = Color.web("#E0E9FC");
+    static final Color HAIRLINE = Color.web("#E4EBF6");
+    static final Color CANVAS_BG = Color.web("#F8F9FF");
     static final Color RED = Color.web("#B42318");
+
+    private static final Locale INDONESIAN = Locale.forLanguageTag("id-ID");
+
+    private PageComponents() { }
 
     static VBox page(String title, String caption, Node... actions) {
         VBox heading = new VBox(5, label(title, 28, FontWeight.BOLD, NAVY), caption(caption));
         HBox.setHgrow(heading, Priority.ALWAYS);
+
         FlowPane toolbar = new FlowPane(8, 6, actions);
         toolbar.setAlignment(Pos.CENTER_RIGHT);
         toolbar.setMaxWidth(Region.USE_PREF_SIZE);
-        HBox header = actions.length == 0 ? row(heading) : row(heading, toolbar);
-        VBox root = new VBox(17, header);
-        root.setPadding(new Insets(25));
+
+        HBox header = (actions.length == 0) ? row(heading) : row(heading, toolbar);
+        VBox root = new VBox(18, header);
+        root.setPadding(new Insets(24, 26, 28, 26));
         root.setMinHeight(Region.USE_PREF_SIZE);
-        root.setBackground(fill(Color.web("#F8F9FF"), 0));
+        root.setBackground(fill(CANVAS_BG, 0));
         return root;
     }
 
@@ -61,13 +93,20 @@ final class PageComponents {
 
     static VBox card(Node... items) {
         VBox box = new VBox(12, items);
-        box.setPadding(new Insets(17));
+        box.setPadding(new Insets(18));
         box.setBackground(fill(Color.WHITE, 12));
+        box.setBorder(stroke(HAIRLINE, 12, 1));
+        box.setEffect(new DropShadow(10, 0, 2, Color.web("#102A4B", 0.04)));
         return box;
     }
 
-    static Label title(String value) { return label(value, 18, FontWeight.BOLD, NAVY); }
-    static Label caption(String value) { return label(value, 13, FontWeight.NORMAL, MUTED); }
+    static Label title(String value) {
+        return label(value, 18, FontWeight.BOLD, NAVY);
+    }
+
+    static Label caption(String value) {
+        return label(value, 13, FontWeight.NORMAL, MUTED);
+    }
 
     static Label label(String value, double size, FontWeight weight, Color color) {
         Label text = new Label(value);
@@ -81,14 +120,29 @@ final class PageComponents {
         return new Background(new BackgroundFill(color, new CornerRadii(radius), Insets.EMPTY));
     }
 
+    static Border stroke(Color color, double radius, double width) {
+        return new Border(new BorderStroke(color, BorderStrokeStyle.SOLID, new CornerRadii(radius), new BorderWidths(width)));
+    }
+
     static Button button(String id, String label, boolean primary, Runnable action) {
         Button button = new Button(label);
         button.setId(id);
         button.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
         button.setTextFill(primary ? Color.WHITE : NAVY);
-        button.setBackground(fill(primary ? TEAL : PALE, 8));
-        button.setPadding(new Insets(8, 12, 8, 12));
+        button.setPadding(new Insets(8, 13, 8, 13));
         button.setCursor(Cursor.HAND);
+
+        Color baseBg = primary ? TEAL : PALE;
+        Color hoverBg = primary ? TEAL_HOVER : PALE_HOVER;
+
+        Runnable paint = () -> {
+            button.setBackground(fill(button.isHover() ? hoverBg : baseBg, 8));
+            button.setBorder(button.isFocused() ? stroke(TEAL_FOCUS, 8, 1.5) : Border.EMPTY);
+        };
+        button.hoverProperty().addListener(obs -> paint.run());
+        button.focusedProperty().addListener(obs -> paint.run());
+        paint.run();
+
         button.setOnAction(event -> action.run());
         return button;
     }
@@ -98,7 +152,8 @@ final class PageComponents {
         input.setId(id);
         input.setPromptText(prompt);
         input.setMinHeight(36);
-        input.setBackground(fill(PALE, 8));
+        input.setFont(Font.font("Segoe UI", 13));
+        styleInputControl(input);
         return input;
     }
 
@@ -108,12 +163,33 @@ final class PageComponents {
         box.getItems().setAll(items);
         box.setValue(value);
         box.setMinHeight(36);
-        box.setBackground(fill(PALE, 8));
+        box.setCursor(Cursor.HAND);
+        styleInputControl(box);
         return box;
     }
 
+    private static void styleInputControl(Region control) {
+        Runnable paint = () -> {
+            if (control.isFocused()) {
+                control.setBackground(fill(Color.WHITE, 8));
+                control.setBorder(stroke(TEAL_FOCUS, 8, 1.5));
+            } else if (control.isHover()) {
+                control.setBackground(fill(PALE_HOVER, 8));
+                control.setBorder(stroke(Color.web("#CBD5E1"), 8, 1));
+            } else {
+                control.setBackground(fill(PALE, 8));
+                control.setBorder(stroke(Color.TRANSPARENT, 8, 1));
+            }
+        };
+        control.focusedProperty().addListener(obs -> paint.run());
+        control.hoverProperty().addListener(obs -> paint.run());
+        paint.run();
+    }
+
     static VBox field(String caption, Node control) {
-        if (control instanceof Region region) region.setMaxWidth(Double.MAX_VALUE);
+        if (control instanceof Region region) {
+            region.setMaxWidth(Double.MAX_VALUE);
+        }
         return new VBox(5, label(caption, 12, FontWeight.SEMI_BOLD, MUTED), control);
     }
 
@@ -133,13 +209,18 @@ final class PageComponents {
 
     static HBox pageControls(String id, int index, int count, IntConsumer select) {
         int pages = Math.max(1, (count + PAGE_SIZE - 1) / PAGE_SIZE);
-        int first = count == 0 ? 0 : index * PAGE_SIZE + 1;
+        int first = (count == 0) ? 0 : index * PAGE_SIZE + 1;
+
         Button previous = button(id + "-previous", "‹ Sebelumnya", false, () -> select.accept(index - 1));
         Button next = button(id + "-next", "Selanjutnya ›", false, () -> select.accept(index + 1));
         previous.setDisable(index == 0);
         next.setDisable(index == pages - 1);
-        HBox controls = row(caption(first + "–" + Math.min((index + 1) * PAGE_SIZE, count) + " dari " + count),
-                spacer(), previous);
+
+        HBox controls = row(
+                caption(first + "–" + Math.min((index + 1) * PAGE_SIZE, count) + " dari " + count),
+                spacer(),
+                previous
+        );
         for (int i = Math.max(0, index - 1); i < Math.min(index + 2, pages); i++) {
             int destination = i;
             controls.getChildren().add(button(id + "-page-" + (i + 1), Integer.toString(i + 1), i == index,
@@ -161,7 +242,8 @@ final class PageComponents {
         column.setMinWidth(138);
         column.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue()));
         column.setCellFactory(unused -> new TableCell<>() {
-            @Override protected void updateItem(T value, boolean empty) {
+            @Override
+            protected void updateItem(T value, boolean empty) {
                 super.updateItem(value, empty);
                 setGraphic(empty || value == null ? null : graphic.apply(value));
             }
@@ -171,7 +253,9 @@ final class PageComponents {
 
     static Dialog<ButtonType> dialog(Window window, String title, Node body) {
         Dialog<ButtonType> dialog = new Dialog<>();
-        if (window != null) dialog.initOwner(window);
+        if (window != null) {
+            dialog.initOwner(window);
+        }
         dialog.setTitle(title);
         dialog.getDialogPane().setPrefWidth(590);
         dialog.getDialogPane().setContent(body);
@@ -185,14 +269,16 @@ final class PageComponents {
     }
 
     static void edit(Window owner, String title, VBox body, String submit, Runnable save, Runnable afterSave) {
-        Label error = label("", 13, FontWeight.NORMAL, RED);
+        Label error = label("", 13, FontWeight.SEMI_BOLD, RED);
         error.setVisible(false);
         error.managedProperty().bind(error.visibleProperty());
         body.getChildren().add(error);
+
         Dialog<ButtonType> dialog = dialog(owner, title, body);
         ButtonType confirm = new ButtonType(submit, ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, confirm);
-        dialog.getDialogPane().lookupButton(confirm).addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+
+        dialog.getDialogPane().lookupButton(confirm).addEventFilter(ActionEvent.ACTION, event -> {
             try {
                 save.run();
             } catch (IllegalArgumentException invalid) {
@@ -204,22 +290,30 @@ final class PageComponents {
         dialog.showAndWait().filter(confirm::equals).ifPresent(result -> afterSave.run());
     }
 
-    static void export(Window owner, String name, boolean pdf, List<String> headers, List<List<?>> rows, Consumer<String> feedback) {
+    static void export(Window owner, String name, boolean pdf, List<String> headers,
+                       List<List<?>> rows, Consumer<String> feedback) {
         String extension = pdf ? ".pdf" : ".xlsx";
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Simpan " + name);
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(pdf ? "Dokumen PDF" : "Buku kerja Excel", "*" + extension));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+                pdf ? "Dokumen PDF" : "Buku kerja Excel", "*" + extension));
         chooser.setInitialFileName(name.toLowerCase(Locale.ROOT).replace(' ', '-') + extension);
+
         var chosen = chooser.showSaveDialog(owner);
-        if (chosen == null) return;
+        if (chosen == null) {
+            return;
+        }
         Path path = chosen.toPath();
         if (!path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(extension)) {
             path = path.resolveSibling(path.getFileName() + extension);
         }
         try {
             ReportExport.Document document = new ReportExport.Document(name, "CheckIn.id", headers, rows);
-            if (pdf) ReportExport.pdf(path, document);
-            else ReportExport.excel(path, document);
+            if (pdf) {
+                ReportExport.pdf(path, document);
+            } else {
+                ReportExport.excel(path, document);
+            }
             feedback.accept("Berkas disimpan sebagai " + path.getFileName() + ".");
         } catch (IOException problem) {
             feedback.accept("Berkas gagal disimpan. " + problem.getMessage());
@@ -227,6 +321,6 @@ final class PageComponents {
     }
 
     static String money(long value) {
-        return "Rp " + NumberFormat.getIntegerInstance(Locale.forLanguageTag("id-ID")).format(value);
+        return "Rp " + NumberFormat.getIntegerInstance(INDONESIAN).format(value);
     }
 }

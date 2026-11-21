@@ -28,9 +28,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.tubespbolkel7.ui.login.LoginLayout.*;
+import static com.example.tubespbolkel7.ui.login.LoginLayout.Layer;
+import static com.example.tubespbolkel7.ui.login.LoginLayout.Model;
+import static com.example.tubespbolkel7.ui.login.LoginLayout.list;
+import static com.example.tubespbolkel7.ui.login.LoginLayout.map;
+import static com.example.tubespbolkel7.ui.login.LoginLayout.number;
+import static com.example.tubespbolkel7.ui.login.LoginLayout.string;
 
 final class LoginPainter {
+    private static final Affine IDENTITY_TRANSFORM = new Affine();
+    private static final double DETERMINANT_EPSILON = 1e-5;
+
     private final Model model;
     private final Map<String, Image> images = new HashMap<>();
     private final Map<String, Color> colors = new HashMap<>();
@@ -40,6 +48,7 @@ final class LoginPainter {
     }
 
     void draw(GraphicsContext graphics, Layer screen) {
+        graphics.setImageSmoothing(true);
         graphics.clearRect(0, 0, screen.width(), screen.height());
         drawLayer(graphics, screen);
     }
@@ -50,10 +59,14 @@ final class LoginPainter {
         if (opacity <= 0) {
             return;
         }
+
         List<?> matrix = layer.matrix();
         graphics.save();
-        graphics.transform(number(matrix, 0, 1), number(matrix, 3, 0), number(matrix, 1, 0),
-                number(matrix, 4, 1), number(matrix, 2, 0), number(matrix, 5, 0));
+        graphics.transform(
+                number(matrix, 0, 1), number(matrix, 3, 0),
+                number(matrix, 1, 0), number(matrix, 4, 1),
+                number(matrix, 2, 0), number(matrix, 5, 0)
+        );
         graphics.setGlobalAlpha(graphics.getGlobalAlpha() * opacity);
 
         if (layer.type().equals("TEXT")) {
@@ -77,14 +90,16 @@ final class LoginPainter {
         List<?> fillPaths = list(properties, "fillPaths");
         List<?> fills = list(properties, "fills");
         List<?> effects = list(properties, "effects");
+
         drawBackdrop(graphics, layer, effects);
-        boolean first = true;
+
+        boolean applyShadowOnce = true;
         for (Object item : fills) {
             Map<?, ?> fill = map(item);
             graphics.save();
-            if (first) {
+            if (applyShadowOnce) {
                 applyEffect(graphics, effects);
-                first = false;
+                applyShadowOnce = false;
             }
             if (string(fill, "type").equals("IMAGE")) {
                 drawImage(graphics, layer, fillPaths, fill);
@@ -127,10 +142,14 @@ final class LoginPainter {
         for (Object item : paths) {
             List<?> path = list(item);
             graphics.beginPath();
-            graphics.setFillRule(Boolean.TRUE.equals(path.get(1)) ? FillRule.EVEN_ODD : FillRule.NON_ZERO);
+            graphics.setFillRule(isEvenOdd(path) ? FillRule.EVEN_ODD : FillRule.NON_ZERO);
             appendPath(graphics, path);
             graphics.fill();
         }
+    }
+
+    private boolean isEvenOdd(List<?> path) {
+        return path.size() > 1 && Boolean.TRUE.equals(path.get(1));
     }
 
     private void appendPath(GraphicsContext graphics, List<?> reference) {
@@ -146,7 +165,7 @@ final class LoginPainter {
             return;
         }
         graphics.beginPath();
-        graphics.setFillRule(Boolean.TRUE.equals(list(paths.getFirst()).get(1)) ? FillRule.EVEN_ODD : FillRule.NON_ZERO);
+        graphics.setFillRule(isEvenOdd(list(paths.getFirst())) ? FillRule.EVEN_ODD : FillRule.NON_ZERO);
         for (Object item : paths) {
             appendPath(graphics, list(item));
         }
@@ -158,15 +177,18 @@ final class LoginPainter {
         List<?> corners = list(layer.properties(), "radius");
         graphics.setFillRule(FillRule.NON_ZERO);
         graphics.beginPath();
+
         if (corners.isEmpty()) {
             graphics.rect(0, 0, width, height);
             return;
         }
-        double max = Math.min(width, height) / 2;
-        double tl = Math.min(max, number(corners, 0, 0));
-        double tr = Math.min(max, number(corners, 1, 0));
-        double br = Math.min(max, number(corners, 2, 0));
-        double bl = Math.min(max, number(corners, 3, 0));
+
+        double maxRadius = Math.min(width, height) / 2.0;
+        double tl = Math.min(maxRadius, number(corners, 0, 0));
+        double tr = Math.min(maxRadius, number(corners, 1, 0));
+        double br = Math.min(maxRadius, number(corners, 2, 0));
+        double bl = Math.min(maxRadius, number(corners, 3, 0));
+
         graphics.moveTo(tl, 0);
         graphics.lineTo(width - tr, 0);
         graphics.quadraticCurveTo(width, 0, width, tr);
@@ -194,19 +216,24 @@ final class LoginPainter {
             drawTextFallback(graphics, layer, defaultPaint);
             return;
         }
+
         Paint currentPaint = defaultPaint;
         graphics.setFillRule(FillRule.NON_ZERO);
         graphics.beginPath();
+
         for (Object item : glyphs) {
             List<?> glyph = list(item);
-            Paint glyphPaint = glyph.size() > 6 && glyph.get(6) instanceof String encoded
-                    ? color(encoded, 1) : defaultPaint;
+            Paint glyphPaint = (glyph.size() > 6 && glyph.get(6) instanceof String encoded)
+                    ? color(encoded, 1)
+                    : defaultPaint;
+
             if (!glyphPaint.equals(currentPaint)) {
                 graphics.setFill(currentPaint);
                 graphics.fill();
                 graphics.beginPath();
                 currentPaint = glyphPaint;
             }
+
             double size = number(glyph, 3, 0);
             graphics.save();
             graphics.translate(number(glyph, 1, 0), number(glyph, 2, 0));
@@ -229,12 +256,14 @@ final class LoginPainter {
         graphics.setFont(Font.font(family, fontWeight(string(text, "style")), size));
         graphics.setFill(paint);
         graphics.setTextBaseline(VPos.BASELINE);
+
+        String chars = layer.characters();
         for (Object item : list(text, "baselines")) {
             List<?> line = list(item);
-            int start = (int) number(line, 2, 0);
-            int end = Math.min(layer.characters().length(), (int) number(line, 3, 0));
+            int start = Math.max(0, (int) number(line, 2, 0));
+            int end = Math.min(chars.length(), (int) number(line, 3, 0));
             if (start < end) {
-                graphics.fillText(layer.characters().substring(start, end), number(line, 0, 0), number(line, 1, size));
+                graphics.fillText(chars.substring(start, end), number(line, 0, 0), number(line, 1, size));
             }
         }
     }
@@ -254,25 +283,34 @@ final class LoginPainter {
         if (string(paint, "type").equals("SOLID")) {
             return color(string(paint, "color"), opacity);
         }
+
         List<?> axis = list(paint, "line");
         if (axis.size() == 4 && width > 0 && height > 0) {
             List<Stop> stops = new ArrayList<>();
             for (Object item : list(paint, "stops")) {
                 List<?> stop = list(item);
-                stops.add(new Stop(number(stop, 0, 0), color((String) stop.get(1), opacity)));
+                if (stop.size() >= 2 && stop.get(1) instanceof String hex) {
+                    stops.add(new Stop(number(stop, 0, 0), color(hex, opacity)));
+                }
             }
             List<?> transform = list(paint, "matrix");
             double gx = number(transform, 0, 0) / width;
             double gy = number(transform, 1, 0) / height;
             double offset = number(transform, 2, 0);
             double lengthSquared = gx * gx + gy * gy;
+
             if (lengthSquared > 0) {
-                return new LinearGradient(-offset * gx / lengthSquared, -offset * gy / lengthSquared,
+                return new LinearGradient(
+                        -offset * gx / lengthSquared, -offset * gy / lengthSquared,
                         (1 - offset) * gx / lengthSquared, (1 - offset) * gy / lengthSquared,
-                        false, CycleMethod.NO_CYCLE, stops);
+                        false, CycleMethod.NO_CYCLE, stops
+                );
             }
-            return new LinearGradient(number(axis, 0, 0) * width, number(axis, 1, 0) * height,
-                    number(axis, 2, 1) * width, number(axis, 3, 0) * height, false, CycleMethod.NO_CYCLE, stops);
+            return new LinearGradient(
+                    number(axis, 0, 0) * width, number(axis, 1, 0) * height,
+                    number(axis, 2, 1) * width, number(axis, 3, 0) * height,
+                    false, CycleMethod.NO_CYCLE, stops
+            );
         }
         return null;
     }
@@ -282,26 +320,35 @@ final class LoginPainter {
             return Color.TRANSPARENT;
         }
         Color base = colors.computeIfAbsent(value, Color::web);
-        return opacity == 1 ? base : new Color(base.getRed(), base.getGreen(), base.getBlue(), base.getOpacity() * opacity);
+        return Double.compare(opacity, 1.0) == 0
+                ? base
+                : new Color(base.getRed(), base.getGreen(), base.getBlue(), base.getOpacity() * opacity);
     }
 
     private void applyEffect(GraphicsContext graphics, List<?> effects) {
         for (Object item : effects) {
             Map<?, ?> effect = map(item);
-            double radius = Math.min(127, number(effect, "radius", 0) / 2);
+            double radius = Math.min(127, number(effect, "radius", 0) / 2.0);
             double spread = Math.clamp(number(effect, "spread", 0), 0, 1);
             double x = number(effect, "x", 0);
             double y = number(effect, "y", 0);
             Color color = color(string(effect, "color"), 1);
+
             switch (string(effect, "type")) {
-                case "DROP_SHADOW" -> graphics.setEffect(new DropShadow(BlurType.GAUSSIAN, color, radius, spread, x, y));
-                case "INNER_SHADOW" -> graphics.setEffect(new InnerShadow(BlurType.GAUSSIAN, color, radius, spread, x, y));
-                case "FOREGROUND_BLUR" -> graphics.setEffect(new GaussianBlur(Math.min(63, radius)));
-                default -> {
-                    continue;
+                case "DROP_SHADOW" -> {
+                    graphics.setEffect(new DropShadow(BlurType.GAUSSIAN, color, radius, spread, x, y));
+                    return;
                 }
+                case "INNER_SHADOW" -> {
+                    graphics.setEffect(new InnerShadow(BlurType.GAUSSIAN, color, radius, spread, x, y));
+                    return;
+                }
+                case "FOREGROUND_BLUR" -> {
+                    graphics.setEffect(new GaussianBlur(Math.min(63, radius)));
+                    return;
+                }
+                default -> { }
             }
-            return;
         }
     }
 
@@ -311,9 +358,11 @@ final class LoginPainter {
             if (!string(effect, "type").equals("BACKGROUND_BLUR")) {
                 continue;
             }
-            double radius = Math.min(63, number(effect, "radius", 0) / 2);
+
+            double radius = Math.min(63, number(effect, "radius", 0) / 2.0);
             var canvas = graphics.getCanvas();
             Bounds bounds = graphics.getTransform().transform(new BoundingBox(0, 0, layer.width(), layer.height()));
+
             double x = Math.max(0, Math.floor(bounds.getMinX() - radius));
             double y = Math.max(0, Math.floor(bounds.getMinY() - radius));
             double right = Math.min(canvas.getWidth(), Math.ceil(bounds.getMaxX() + radius));
@@ -321,14 +370,16 @@ final class LoginPainter {
             if (right <= x || bottom <= y) {
                 return;
             }
+
             SnapshotParameters parameters = new SnapshotParameters();
             parameters.setFill(Color.TRANSPARENT);
             parameters.setViewport(new Rectangle2D(x, y, right - x, bottom - y));
             WritableImage backdrop = canvas.snapshot(parameters, null);
+
             graphics.save();
             clipOutline(graphics, layer, list(layer.properties(), "fillPaths"));
             graphics.clip();
-            graphics.setTransform(new Affine());
+            graphics.setTransform(IDENTITY_TRANSFORM);
             graphics.setGlobalAlpha(1);
             graphics.setEffect(new GaussianBlur(radius));
             graphics.drawImage(backdrop, x, y);
@@ -343,13 +394,16 @@ final class LoginPainter {
         if (image == null || image.isError() || layer.width() <= 0 || layer.height() <= 0) {
             return;
         }
+
         clipOutline(graphics, layer, paths);
         graphics.clip();
         graphics.setGlobalAlpha(graphics.getGlobalAlpha() * number(paint, "opacity", 1));
+
         double width = layer.width();
         double height = layer.height();
         List<?> matrix = list(paint, "matrix");
         String mode = string(paint, "mode");
+
         if (!matrix.isEmpty() && (mode.equals("STRETCH") || mode.equals("CROP"))) {
             double a = number(matrix, 0, 1);
             double b = number(matrix, 1, 0);
@@ -358,19 +412,24 @@ final class LoginPainter {
             double d = number(matrix, 4, 1);
             double ty = number(matrix, 5, 0);
             double determinant = a * d - b * c;
-            if (Math.abs(determinant) > 0.00001) {
-                graphics.transform(width * d / determinant, -height * c / determinant,
+
+            if (Math.abs(determinant) > DETERMINANT_EPSILON) {
+                graphics.transform(
+                        width * d / determinant, -height * c / determinant,
                         -width * b / determinant, height * a / determinant,
-                        width * (b * ty - d * tx) / determinant, height * (c * tx - a * ty) / determinant);
+                        width * (b * ty - d * tx) / determinant, height * (c * tx - a * ty) / determinant
+                );
                 graphics.drawImage(image, 0, 0, 1, 1);
                 return;
             }
         }
-        double ratio = mode.equals("FIT") ? Math.min(width / image.getWidth(), height / image.getHeight())
+
+        double ratio = mode.equals("FIT")
+                ? Math.min(width / image.getWidth(), height / image.getHeight())
                 : Math.max(width / image.getWidth(), height / image.getHeight());
         double imageWidth = image.getWidth() * ratio;
         double imageHeight = image.getHeight() * ratio;
-        graphics.drawImage(image, (width - imageWidth) / 2, (height - imageHeight) / 2, imageWidth, imageHeight);
+        graphics.drawImage(image, (width - imageWidth) / 2.0, (height - imageHeight) / 2.0, imageWidth, imageHeight);
     }
 
     private Image loadImage(String filename) {
