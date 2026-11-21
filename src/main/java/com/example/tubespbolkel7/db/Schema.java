@@ -95,6 +95,14 @@ final class Schema {
             notes            TEXT NOT NULL DEFAULT ''
         )""",
         """
+        CREATE TABLE IF NOT EXISTS front_desk_notes (
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            author  TEXT NOT NULL,
+            room    TEXT,
+            message TEXT NOT NULL,
+            created TEXT NOT NULL
+        )""",
+        """
         CREATE TABLE IF NOT EXISTS guests (
             id       TEXT PRIMARY KEY,
             name     TEXT NOT NULL,
