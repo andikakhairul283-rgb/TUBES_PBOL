@@ -273,10 +273,14 @@ final class SettingsPages {
                         save.run();
                         feedback.setTextFill(TEAL);
                         feedback.setText("Perubahan tersimpan.");
-                    } catch (IllegalArgumentException invalid) {
-                        feedback.setTextFill(RED);
-                        feedback.setText(invalid.getMessage());
-                    }
+                    } catch (IllegalArgumentException | IllegalStateException failure) {
+    feedback.setTextFill(RED);
+    feedback.setText(
+            failure.getMessage() == null
+                    ? "Gagal menyimpan perubahan."
+                    : failure.getMessage()
+    );
+}
                 }));
     }
 

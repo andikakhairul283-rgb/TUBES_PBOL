@@ -42,7 +42,13 @@ public final class ReportData {
         }
     }
 
-    public record Activity(Booking booking, boolean occupied, boolean checkIn, boolean checkOut) { }
+    public record Activity(
+        Booking booking,
+        boolean occupied,
+        boolean checkIn,
+        boolean checkOut,
+        long stayNights
+) { }
     public record Transaction(Booking booking, Receipt receipt) { }
 
     public record Day(LocalDate date, List<Activity> activity, List<Transaction> transactions, int capacity) {
@@ -71,14 +77,29 @@ public final class ReportData {
         }
 
         public long stays() {
-            return days.stream().flatMap(day -> day.activity().stream()).filter(item -> item.occupied() || item.checkIn())
-                    .map(item -> item.booking().code()).distinct().count();
-        }
+    return days.stream()
+            .flatMap(day -> day.activity().stream())
+            .filter(Activity::checkIn)
+            .map(item -> item.booking().code())
+            .distinct()
+            .count();
+}
 
-        public double nightsPerStay() {
-            long count = stays();
-            return count == 0 ? 0 : days.stream().mapToLong(Day::occupied).sum() / (double) count;
-        }
+       public double nightsPerStay() {
+    long count = stays();
+
+    if (count == 0) {
+        return 0;
+    }
+
+    long totalNights = days.stream()
+            .flatMap(day -> day.activity().stream())
+            .filter(Activity::checkIn)
+            .mapToLong(Activity::stayNights)
+            .sum();
+
+    return totalNights / (double) count;
+}
 
         public long deposits() { return days.stream().mapToLong(Day::deposits).sum(); }
         public long payments() { return days.stream().mapToLong(Day::payments).sum(); }
@@ -112,8 +133,31 @@ public final class ReportData {
                     boolean checkOut = date.equals(stay.checkOut());
                     boolean occupied = !date.isBefore(stay.checkIn()) && (stay.checkOut() == null || date.isBefore(stay.checkOut()));
                     if (occupied || checkIn || checkOut) {
-                        activities.add(new Activity(booking, occupied, checkIn, checkOut));
-                    }
+    LocalDate actualCheckOut = stay.checkOut() == null
+        ? today.plusDays(1)
+        : stay.checkOut();
+
+LocalDate periodStart = stay.checkIn().isAfter(filter.start())
+        ? stay.checkIn()
+        : filter.start();
+
+LocalDate periodEnd = actualCheckOut.isBefore(end.plusDays(1))
+        ? actualCheckOut
+        : end.plusDays(1);
+
+long stayNights = Math.max(
+        0,
+        ChronoUnit.DAYS.between(periodStart, periodEnd)
+);
+
+    activities.add(new Activity(
+            booking,
+            occupied,
+            checkIn,
+            checkOut,
+            stayNights
+    ));
+}
                 }
                 days.add(new Day(date, List.copyOf(activities),
                         List.copyOf(transactions.getOrDefault(date, List.of())), rooms.size()));

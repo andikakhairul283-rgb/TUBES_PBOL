@@ -146,6 +146,42 @@ final class Schema {
             amount           INTEGER NOT NULL CHECK (amount > 0),
             returned         INTEGER NOT NULL DEFAULT 0
         )""",
+
+"""
+CREATE TABLE IF NOT EXISTS hotel_settings (
+    id        INTEGER PRIMARY KEY CHECK (id = 1),
+    name      TEXT NOT NULL,
+    phone     TEXT NOT NULL DEFAULT '',
+    email     TEXT NOT NULL DEFAULT '',
+    city      TEXT NOT NULL DEFAULT '',
+    address   TEXT NOT NULL DEFAULT '',
+    arrival   TEXT NOT NULL,
+    departure TEXT NOT NULL,
+    logo      BLOB
+)""",
+"""
+CREATE TABLE IF NOT EXISTS hotel_policies (
+    id                INTEGER PRIMARY KEY CHECK (id = 1),
+    verify_identity   INTEGER NOT NULL DEFAULT 1,
+    check_in_note     TEXT NOT NULL DEFAULT '',
+    cancellation_note TEXT NOT NULL DEFAULT ''
+)""",
+"""
+CREATE TABLE IF NOT EXISTS hotel_pricing (
+    id                 INTEGER PRIMARY KEY CHECK (id = 1),
+    hotel_tax          INTEGER NOT NULL DEFAULT 11,
+    service_charge     INTEGER NOT NULL DEFAULT 0,
+    security_deposit   INTEGER NOT NULL DEFAULT 0,
+    weekend_surcharge  INTEGER NOT NULL DEFAULT 0
+)""",
+"""
+CREATE TABLE IF NOT EXISTS user_profiles (
+    username     TEXT PRIMARY KEY COLLATE NOCASE
+                 REFERENCES users(username) ON DELETE CASCADE,
+    display_name TEXT NOT NULL,
+    email        TEXT NOT NULL DEFAULT ''
+)""",
+
         "CREATE INDEX IF NOT EXISTS idx_res_room_dates ON reservations(room_number, arrival, departure)",
         "CREATE INDEX IF NOT EXISTS idx_res_status ON reservations(status)",
         "CREATE INDEX IF NOT EXISTS idx_receipts_res ON receipts(reservation_code)",

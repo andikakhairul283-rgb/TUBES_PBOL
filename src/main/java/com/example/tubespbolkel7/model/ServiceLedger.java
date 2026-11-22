@@ -107,43 +107,78 @@ public final class ServiceLedger {
 
     public ObservableList<Order> orders() { return ordersView; }
 
-    public Order addOrder(LocalDateTime time, RoomGuest guest, CatalogItem item, int quantity, String notes) {
-        if (guest == null || item == null || !catalog.contains(item) || !item.available() || quantity < 1 || quantity > 100) {
-            throw new IllegalArgumentException("Pilih kamar, layanan yang tersedia, dan jumlah antara 1–100.");
-        }
-        Order order = new Order(nextOrderCode(), time, guest, item, quantity, Status.PROCESSING, notes.strip());
-        orders.add(0, order);
-        persist();
-        return order;
+    
+public Order addOrder(LocalDateTime time, RoomGuest guest, CatalogItem item, int quantity, String notes) {
+    if (guest == null || item == null || !catalog.contains(item) || !item.available()
+            || quantity < 1 || quantity > 100) {
+        throw new IllegalArgumentException("Pilih kamar, layanan yang tersedia, dan jumlah antara 1–100.");
     }
 
-    public void updateStatus(Order order, Status status) {
-        int index = orders.indexOf(order);
-        if (index < 0 || !order.status().choices().contains(status)) {
-            throw new IllegalArgumentException("Status pesanan sudah berubah. Buka kembali detail pesanan.");
-        }
-        orders.set(index, order.withStatus(status));
-        persist();
+    Order order = new Order(
+            nextOrderCode(), time, guest, item, quantity,
+            Status.PROCESSING, notes.strip()
+    );
+
+    List<Order> updatedOrders = new java.util.ArrayList<>(orders);
+    updatedOrders.add(0, order);
+
+    persist(catalog, updatedOrders);
+
+    orders.setAll(updatedOrders);
+    nextCode++;
+
+    return order;
+}
+
+
+    
+public void updateStatus(Order order, Status status) {
+    int index = orders.indexOf(order);
+
+    if (index < 0 || !order.status().choices().contains(status)) {
+        throw new IllegalArgumentException("Status pesanan sudah berubah. Buka kembali detail pesanan.");
     }
 
-    public void saveItem(CatalogItem original, CatalogItem item) {
-        if (item.name().isBlank() || item.unit().isBlank() || item.price() < 0 || item.price() > 100_000_000) {
-            throw new IllegalArgumentException("Lengkapi nama, satuan, dan tarif sampai Rp100 juta.");
-        }
-        if (catalog.stream().anyMatch(other -> !other.equals(original) && other.name().equalsIgnoreCase(item.name()))) {
-            throw new IllegalArgumentException("Nama layanan ini sudah dipakai.");
-        }
-        if (original == null) {
-            catalog.add(item);
-        } else {
-            int index = catalog.indexOf(original);
-            if (index < 0) {
-                throw new IllegalArgumentException("Data layanan sudah berubah. Buka kembali detail layanan.");
-            }
-            catalog.set(index, item);
-        }
-        persist();
+    List<Order> updatedOrders = new java.util.ArrayList<>(orders);
+    updatedOrders.set(index, order.withStatus(status));
+
+    persist(catalog, updatedOrders);
+
+    orders.setAll(updatedOrders);
+}
+
+    
+public void saveItem(CatalogItem original, CatalogItem item) {
+    if (item.name().isBlank() || item.unit().isBlank()
+            || item.price() < 0 || item.price() > 100_000_000) {
+        throw new IllegalArgumentException("Lengkapi nama, satuan, dan tarif sampai Rp100 juta.");
     }
+
+    if (catalog.stream().anyMatch(other ->
+            !other.equals(original)
+                    && other.name().equalsIgnoreCase(item.name()))) {
+        throw new IllegalArgumentException("Nama layanan ini sudah dipakai.");
+    }
+
+    List<CatalogItem> updatedCatalog = new java.util.ArrayList<>(catalog);
+
+    if (original == null) {
+        updatedCatalog.add(item);
+    } else {
+        int index = updatedCatalog.indexOf(original);
+
+        if (index < 0) {
+            throw new IllegalArgumentException("Data layanan sudah berubah. Buka kembali detail layanan.");
+        }
+
+        updatedCatalog.set(index, item);
+    }
+
+    persist(updatedCatalog, orders);
+
+    catalog.setAll(updatedCatalog);
+}
+
 
     public long serviceTotal(String reservationCode) {
         if (reservationCode == null || reservationCode.isBlank()) {
@@ -155,13 +190,28 @@ public final class ServiceLedger {
     }
 
     /** Menyimpan katalog dan seluruh pesanan ke database setiap kali ada perubahan. */
-    private void persist() {
-        repository.save(new ServiceRepository.Snapshot(
-                catalog.stream().map(ServiceLedger::toRow).toList(),
-                orders.stream().map(order -> new ServiceRepository.OrderRow(order.code(), order.created().toString(),
-                        order.roomGuest().reservation(), order.roomGuest().room(), order.roomGuest().guest(),
-                        toRow(order.item()), order.quantity(), order.status().name(), order.notes())).toList()));
-    }
+    
+private void persist() {
+    persist(catalog, orders);
+}
+
+private void persist(List<CatalogItem> catalogItems, List<Order> orderItems) {
+    repository.save(new ServiceRepository.Snapshot(
+            catalogItems.stream().map(ServiceLedger::toRow).toList(),
+            orderItems.stream().map(order -> new ServiceRepository.OrderRow(
+                    order.code(),
+                    order.created().toString(),
+                    order.roomGuest().reservation(),
+                    order.roomGuest().room(),
+                    order.roomGuest().guest(),
+                    toRow(order.item()),
+                    order.quantity(),
+                    order.status().name(),
+                    order.notes()
+            )).toList()
+    ));
+}
+
 
     private static ServiceRepository.ItemRow toRow(CatalogItem item) {
         return new ServiceRepository.ItemRow(item.name(), item.category().name(), item.unit(), item.price(), item.available());
@@ -171,5 +221,7 @@ public final class ServiceLedger {
         return new CatalogItem(row.name(), Category.valueOf(row.category()), row.unit(), row.price(), row.available());
     }
 
-    private String nextOrderCode() { return "LYN-%03d".formatted(nextCode++); }
+    private String nextOrderCode() {
+    return "LYN-%03d".formatted(nextCode);
+}
 }

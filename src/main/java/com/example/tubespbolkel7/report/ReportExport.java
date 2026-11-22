@@ -3,6 +3,7 @@ package com.example.tubespbolkel7.report;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
@@ -105,14 +106,41 @@ public final class ReportExport {
     }
 
     private static void pdfText(StringBuilder output, int x, int y, int size, String value) {
-        String escaped = value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)").replace('\n', ' ').replace('\r', ' ');
-        output.append("BT /F1 ").append(size).append(" Tf ").append(x).append(' ').append(y)
-                .append(" Td (").append(escaped).append(") Tj ET\n");
+    StringBuilder clean = new StringBuilder();
+
+    for (int index = 0; index < value.length(); index++) {
+        char character = value.charAt(index);
+
+        if (character == '\n' || character == '\r' || character == '\t') {
+            clean.append(' ');
+        } else if (!Character.isISOControl(character)) {
+            clean.append(character);
+        }
     }
 
+    String escaped = clean.toString()
+            .replace("\\", "\\\\")
+            .replace("(", "\\(")
+            .replace(")", "\\)");
+
+    output.append("BT /F1 ").append(size).append(" Tf ").append(x).append(' ').append(y)
+            .append(" Td (").append(escaped).append(") Tj ET\n");
+}
+
     private static byte[] encoded(String value) {
-        return value.getBytes(PDF_TEXT);
+    CharsetEncoder encoder = PDF_TEXT.newEncoder();
+    StringBuilder safe = new StringBuilder(value.length());
+
+    for (int index = 0; index < value.length();) {
+        int codePoint = value.codePointAt(index);
+        String character = new String(Character.toChars(codePoint));
+
+        safe.append(encoder.canEncode(character) ? character : "?");
+        index += Character.charCount(codePoint);
     }
+
+    return safe.toString().getBytes(PDF_TEXT);
+}
 
     private static String sheet(Document document) {
         StringBuilder sheet = new StringBuilder("<worksheet xmlns=\"" + SHEET + "\"><cols><col min=\"1\" max=\""
@@ -140,8 +168,33 @@ public final class ReportExport {
     }
 
     private static String escapeXml(String value) {
-        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    StringBuilder escaped = new StringBuilder();
+
+    for (int index = 0; index < value.length();) {
+        int codePoint = value.codePointAt(index);
+
+        if (codePoint == '&') {
+            escaped.append("&amp;");
+        } else if (codePoint == '<') {
+            escaped.append("&lt;");
+        } else if (codePoint == '>') {
+            escaped.append("&gt;");
+        } else if (codePoint == '"') {
+            escaped.append("&quot;");
+        } else if (codePoint == '\'') {
+            escaped.append("&apos;");
+        } else if (codePoint == 0x9 || codePoint == 0xA || codePoint == 0xD
+                || (codePoint >= 0x20 && codePoint <= 0xD7FF)
+                || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+                || (codePoint >= 0x10000 && codePoint <= 0x10FFFF)) {
+            escaped.appendCodePoint(codePoint);
+        }
+
+        index += Character.charCount(codePoint);
     }
+
+    return escaped.toString();
+}
 
     private static String relationship(String type, String target) {
         return "<Relationships xmlns=\"" + PACKAGE_REL + "\"><Relationship Id=\"rId1\" Type=\""
