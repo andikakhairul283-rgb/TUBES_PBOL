@@ -2,6 +2,7 @@ package com.example.tubespbolkel7.ui;
 
 import com.example.tubespbolkel7.model.HotelData;
 import com.example.tubespbolkel7.model.Role;
+import com.example.tubespbolkel7.model.Pengguna;
 import javafx.animation.FadeTransition;
 import javafx.beans.binding.Bindings;
 import javafx.scene.Node;
@@ -24,13 +25,13 @@ final class HotelWorkspace extends BorderPane {
     private final BorderPane ownerLayout;
     private final Runnable logout;
 
-    HotelWorkspace(Role role, HotelData data, String username, Runnable logout) {
-        this.role = role;
+    HotelWorkspace(Pengguna pengguna, HotelData data, Runnable logout) {
+        this.role = pengguna.getRole();
         this.logout = logout;
         this.operations = new HotelOperations(
-                data, username, role, this::open,
-                () -> getScene() == null ? null : getScene().getWindow()
-        );
+        data, pengguna.getUsername(), role, this::open,
+        () -> getScene() == null ? null : getScene().getWindow()
+);
 
         setId("hotel-workspace");
         setBackground(Background.fill(CANVAS_BG));
