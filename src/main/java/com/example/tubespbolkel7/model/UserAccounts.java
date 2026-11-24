@@ -41,9 +41,17 @@ public final class UserAccounts {
 
     public boolean accepts(String username, String password, Role role) {
         Entry entry = entries.get(key(username));
-        if (entry == null) return true;
+        if (entry == null) return false;
         Account account = entry.account();
         return account.enabled() && account.role() == role && verifies(entry.credential(), password);
+    }
+
+    public boolean signIn(String username, String password, Role role) {
+        if (find(username) == null) {
+            create(username, username, role, true, password);
+            return true;
+        }
+        return accepts(username, password, role);
     }
 
     public void create(String username, String name, Role role, boolean enabled, String password) {
@@ -62,6 +70,19 @@ public final class UserAccounts {
             throw new IllegalArgumentException("Akun Owner yang sedang digunakan harus tetap aktif sebagai Owner.");
         }
         store(new Entry(new Account(entry.account().username(), name, role, enabled), entry.credential()));
+    }
+
+    void delete(String username, String actor) {
+        Entry owner = require(actor);
+        if (owner.account().role() != Role.OWNER || !owner.account().enabled()) {
+            throw new IllegalArgumentException("Hanya Owner aktif yang bisa menghapus akun.");
+        }
+        if (key(username).equals(key(actor))) {
+            throw new IllegalArgumentException("Kamu tidak bisa menghapus akun yang sedang kamu gunakan.");
+        }
+        Account account = require(username).account();
+        repository.delete(account.username());
+        entries.remove(key(account.username()));
     }
 
     public void resetPassword(String username, String password) {

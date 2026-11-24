@@ -228,7 +228,7 @@ final class SettingsPages {
 
         return new VBox(16,
                 card(title(app.isOwner() ? "Riwayat Login" : "Pengguna & Peran"),
-                        caption("Daftar pengguna yang masuk selama sesi aplikasi."),
+                        caption("Login terakhir yang tercatat untuk setiap akun dan peran."),
                         row(search, role), table),
                 card(title("Hak Akses per Peran"),
                         caption("Owner · Manajemen dan laporan hotel"),

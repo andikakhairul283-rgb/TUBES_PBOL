@@ -16,6 +16,14 @@ public final class UserRepository {
 
     public UserRepository(Database database) { this.database = database; }
 
+    public void delete(String username) {
+        try (Connection connection = database.connect()) {
+            Sql.update(connection, "DELETE FROM users WHERE username = ?", username);
+        } catch (SQLException failure) {
+            throw new IllegalStateException("Gagal menghapus akun dari database.", failure);
+        }
+    }
+
     public List<Row> loadAll() {
         List<Row> rows = new ArrayList<>();
         String sql = "SELECT username, name, role, enabled, salt, hash FROM users ORDER BY rowid";

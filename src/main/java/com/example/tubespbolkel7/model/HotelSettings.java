@@ -64,7 +64,6 @@ public final class HotelSettings {
 
     private final UserAccounts accounts = new UserAccounts();
     private final Map<String, Profile> profiles = new LinkedHashMap<>();
-    private final Map<String, Login> logins = new LinkedHashMap<>();
 
     private final HotelSettingsRepository repository =
             new HotelSettingsRepository(Database.shared());
@@ -90,7 +89,9 @@ public final class HotelSettings {
     }
 
     public List<Login> logins() {
-        return List.copyOf(logins.values()).reversed();
+        return repository.loadLogins().stream()
+                .map(row -> new Login(row.username(), Role.valueOf(row.role()), LocalDateTime.parse(row.loggedAt())))
+                .toList();
     }
 
     private void restore() {
@@ -164,11 +165,6 @@ public void savePricing(Pricing next) {
 
         byte[] logo = encodeLogo(next.logo());
 
-if (logo == null) {
-    HotelSettingsRepository.HotelRow savedHotel = repository.loadHotel();
-    logo = savedHotel == null ? null : savedHotel.logo();
-}
-
 repository.saveHotel(new HotelSettingsRepository.HotelRow(
         next.name(),
         next.phone(),
@@ -237,8 +233,12 @@ repository.saveHotel(new HotelSettingsRepository.HotelRow(
 
         checkEmail(next.email());
 
+        UserAccounts.Account account = accounts.find(username);
+        if (account == null) {
+            throw new IllegalArgumentException("Akun belum terdaftar. Masuk kembali dengan akun yang dibuat Owner.");
+        }
         repository.saveProfile(new HotelSettingsRepository.ProfileRow(
-                username,
+                account.username(),
                 next.displayName(),
                 next.email()
         ));
@@ -246,11 +246,13 @@ repository.saveHotel(new HotelSettingsRepository.HotelRow(
         profiles.put(username.toLowerCase(Locale.ROOT), next);
     }
 
-    public void recordLogin(String username, Role role) {
-        String key = role.name() + ":" + username;
+    public void deleteAccount(String username, String actor) {
+        accounts.delete(username, actor);
+        profiles.remove(username.toLowerCase(Locale.ROOT));
+    }
 
-        logins.remove(key);
-        logins.put(key, new Login(username, role, LocalDateTime.now()));
+    public void recordLogin(String username, Role role) {
+        repository.saveLogin(new HotelSettingsRepository.LoginRow(username, role.name(), LocalDateTime.now().toString()));
     }
 
     private static byte[] encodeLogo(Image image) {

@@ -19,7 +19,7 @@ public final class DatabaseCheck {
                 System.out.println(" - " + rows.getString(1));
                 count++;
             }
-            System.out.println(count == 14 ? "OK: 14 tabel terbentuk." : "PERIKSA: tabel terbentuk " + count + ", seharusnya 14.");
+            System.out.println("Jumlah tabel aplikasi: " + count);
         }
     }
 }

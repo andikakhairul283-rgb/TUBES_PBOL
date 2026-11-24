@@ -54,10 +54,11 @@ final class OwnerAccounts {
                 column("Status", account -> account.enabled() ? "Aktif" : "Nonaktif"),
                 actions(account -> row(
                         button("owner-user-edit-" + account.username(), "Ubah", false, () -> editAccount(app, account, refresh)),
-                        button("owner-user-reset-" + account.username(), "Reset Sandi", false, () -> reset(app, account))
+                        button("owner-user-reset-" + account.username(), "Reset Sandi", false, () -> reset(app, account)),
+                        deleteButton(app, account)
                 ))
         ));
-        table.getColumns().getLast().setMinWidth(186);
+        table.getColumns().getLast().setMinWidth(260);
 
         HBox.setHgrow(search, Priority.ALWAYS);
         search.textProperty().addListener((obs, old, value) -> refresh.run());
@@ -103,6 +104,16 @@ final class OwnerAccounts {
                         enabled.isSelected(), app.username());
             }
         }, refresh);
+    }
+
+    private static javafx.scene.control.Button deleteButton(HotelOperations app, Account account) {
+        var delete = button("owner-user-delete-" + account.username(), "Hapus", false,
+                () -> edit(app.owner(), "Hapus Pengguna",
+                        card(title(account.username()), caption("Akun, profil, dan catatan login terakhir akan dihapus.")),
+                        "Hapus akun", () -> app.data().settings().deleteAccount(account.username(), app.username()),
+                        () -> app.open(HotelRoute.USERS)));
+        delete.setDisable(account.username().equalsIgnoreCase(app.username()));
+        return delete;
     }
 
     private static void reset(HotelOperations app, Account account) {

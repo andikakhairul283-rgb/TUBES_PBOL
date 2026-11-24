@@ -312,7 +312,7 @@ final class LoginForm extends Pane {
     }
 
     private void refreshSubmitLabel() {
-        submit.setText("Masuk sebagai " + selectedRole().label());
+        submit.setText("Masuk / Daftar " + selectedRole().label());
     }
 
     private void submit() {
@@ -327,8 +327,13 @@ final class LoginForm extends Pane {
 
         Role role = selectedRole();
         String account = username.getText().strip();
-        if (!credentials.accepts(account, password.getText(), role)) {
-            showError(password, "Akun tidak aktif, peran tidak sesuai, atau kata sandi salah.");
+        try {
+            if (!credentials.accepts(account, password.getText(), role)) {
+                showError(password, "Akun nonaktif, kata sandi salah, atau username sudah dipakai untuk peran lain.");
+                return;
+            }
+        } catch (IllegalArgumentException | IllegalStateException failure) {
+            showError(password, failure.getMessage());
             return;
         }
 

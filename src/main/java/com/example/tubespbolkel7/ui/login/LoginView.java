@@ -46,7 +46,7 @@ public final class LoginView extends Pane {
 
     public void reset(String rememberedUsername) {
         String safeUsername = rememberedUsername == null ? "" : rememberedUsername;
-        form = new LoginForm(screen, model, safeUsername, accounts::accepts, signIn);
+        form = new LoginForm(screen, model, safeUsername, accounts::signIn, signIn);
         form.resize(screen.width(), screen.height());
 
         lastLogicalWidth = -1;

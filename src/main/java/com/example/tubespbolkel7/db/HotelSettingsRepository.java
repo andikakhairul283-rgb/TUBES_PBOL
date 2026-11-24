@@ -7,6 +7,27 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public final class HotelSettingsRepository {
+    public record LoginRow(String username, String role, String loggedAt) { }
+
+    public java.util.List<LoginRow> loadLogins() {
+        try (Connection connection = database.connect()) {
+            return Sql.query(connection, "SELECT username, role, logged_at FROM user_last_logins ORDER BY logged_at DESC",
+                    row -> new LoginRow(row.getString(1), row.getString(2), row.getString(3)));
+        } catch (SQLException failure) {
+            throw databaseError("memuat riwayat login", failure);
+        }
+    }
+
+    public void saveLogin(LoginRow login) {
+        try (Connection connection = database.connect()) {
+            Sql.update(connection, """
+                    INSERT INTO user_last_logins (username, role, logged_at) VALUES (?, ?, ?)
+                    ON CONFLICT(username, role) DO UPDATE SET logged_at = excluded.logged_at
+                    """, login.username(), login.role(), login.loggedAt());
+        } catch (SQLException failure) {
+            throw databaseError("menyimpan riwayat login", failure);
+        }
+    }
 
     public record HotelRow(
             String name,

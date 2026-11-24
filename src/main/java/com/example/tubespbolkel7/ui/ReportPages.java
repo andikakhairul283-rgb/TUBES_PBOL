@@ -179,7 +179,7 @@ final class ReportPages {
                                     report.days().size() + " hari tercakup"))
                     : new HBox(12,
                             metric("RATA-RATA OKUPANSI", percentage(report.occupancy()), "Kamar-malam terisi"),
-                            metric("TOTAL TAMU", Long.toString(report.stays()), "Dihitung per reservasi check-in"),
+                            metric("RESERVASI CHECK-IN", Long.toString(report.stays()), "Check-in dalam periode"),
                             metric("RATA-RATA LAMA INAP", decimal(report.nightsPerStay()) + " malam", "Malam dalam periode"),
                             metric("TINGKAT PEMBATALAN", percentage(percent(report.cancellations(), report.reservations())),
                                     "Per jadwal kedatangan"));

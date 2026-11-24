@@ -182,6 +182,13 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     email        TEXT NOT NULL DEFAULT ''
 )""",
 
+        """
+        CREATE TABLE IF NOT EXISTS user_last_logins (
+            username TEXT NOT NULL COLLATE NOCASE REFERENCES users(username) ON DELETE CASCADE,
+            role TEXT NOT NULL,
+            logged_at TEXT NOT NULL,
+            PRIMARY KEY (username, role)
+        )""",
         "CREATE INDEX IF NOT EXISTS idx_res_room_dates ON reservations(room_number, arrival, departure)",
         "CREATE INDEX IF NOT EXISTS idx_res_status ON reservations(status)",
         "CREATE INDEX IF NOT EXISTS idx_receipts_res ON receipts(reservation_code)",

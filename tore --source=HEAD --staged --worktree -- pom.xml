@@ -1,0 +1,24 @@
+[1mdiff --git a/pom.xml b/pom.xml[m
+[1mindex f0be78f..b28a8e1 100644[m
+[1m--- a/pom.xml[m
+[1m+++ b/pom.xml[m
+[36m@@ -20,12 +20,6 @@[m
+             <artifactId>javafx-controls</artifactId>[m
+             <version>21.0.6</version>[m
+         </dependency>[m
+[31m-        <dependency>[m
+[31m-            <groupId>org.openjfx</groupId>[m
+[31m-            <artifactId>javafx-fxml</artifactId>[m
+[31m-            <version>21.0.6</version>[m
+[31m-        </dependency>[m
+[31m-[m
+         <dependency>[m
+             <groupId>org.junit.jupiter</groupId>[m
+             <artifactId>junit-jupiter-api</artifactId>[m
+[36m@@ -73,4 +67,4 @@[m
+             </plugin>[m
+         </plugins>[m
+     </build>[m
+[31m-</project>[m
+\ No newline at end of file[m
+[32m+[m[32m</project>[m
